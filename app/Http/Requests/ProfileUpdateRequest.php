@@ -23,8 +23,15 @@ class ProfileUpdateRequest extends FormRequest
                 'lowercase',
                 'email',
                 'max:255',
+                'gender' => ['nullable', 'string', Rule::in(['男性', '女性', 'その他'])],
+                'occupation' => ['nullable', 'string', 'max:255'], 
+
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+
+            'phone' => ['nullable', 'string', 'max:255'],
+            'company' => ['nullable', 'string', 'max:255'],
+            'position' => ['nullable', 'string', 'max:255'],
         ];
     }
 }
