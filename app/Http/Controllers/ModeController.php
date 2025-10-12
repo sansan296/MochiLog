@@ -3,20 +3,24 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 
 class ModeController extends Controller
 {
-    public function select(Request $request)
+    public function select()
     {
-        $type = $request->input('user_type');
+        return view('mode.select');
+    }
 
-        Session::put('user_type', $type);
+    public function store(Request $request)
+    {
+        $userType = $request->input('user_type'); 
 
-        if ($type === 'home') {
+        if ($userType === 'home') {
             return redirect()->route('dashboard.home');
-        } else {
+        } elseif ($userType === 'company') {
             return redirect()->route('dashboard.company');
         }
+
+        return redirect()->back()->with('error', '無効な選択です');
     }
 }

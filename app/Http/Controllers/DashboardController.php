@@ -9,36 +9,23 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function home()
-    {
-        $today = Carbon::today();
-        $oneWeekLater = Carbon::today()->addWeek();
-
-        $expiredItems = Item::whereDate('expiration_date', '<', $today)->get();
-
-        $nearExpiredItems = Item::whereDate('expiration_date', '>=', $today)
-                                ->whereDate('expiration_date', '<=', $oneWeekLater)
-                                ->get();
-
-        $memos = Memo::with(['item', 'user'])->latest()->get();
-
-        return view('dashboard', compact('expiredItems', 'nearExpiredItems', 'memos'));
+    public function show($mode)
+{
+    if (!in_array($mode, ['home', 'company'])) {
+        abort(404);
     }
 
-    public function company()
-    {
-        $today = Carbon::today();
-        $oneWeekLater = Carbon::today()->addWeek();
+    $today = Carbon::today();
+    $oneWeekLater = Carbon::today()->addWeek();
 
-        $expiredItems = Item::whereDate('expiration_date', '<', $today)->get();
+    $expiredItems = Item::whereDate('expiration_date', '<', $today)->get();
+    $nearExpiredItems = Item::whereDate('expiration_date', '>=', $today)
+                            ->whereDate('expiration_date', '<=', $oneWeekLater)
+                            ->get();
+    $memos = Memo::with(['item', 'user'])->latest()->get();
 
-        $nearExpiredItems = Item::whereDate('expiration_date', '>=', $today)
-                                ->whereDate('expiration_date', '<=', $oneWeekLater)
-                                ->get();
+    return view("dashboard.$mode", compact('expiredItems', 'nearExpiredItems', 'memos'));
+}
 
-        $memos = Memo::with(['item', 'user'])->latest()->get();
-
-        return view('dashboard.company', compact('expiredItems', 'nearExpiredItems', 'memos'));
-    }
 
 }

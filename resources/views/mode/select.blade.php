@@ -1,17 +1,25 @@
-@extends('layouts.app')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-2xl text-gray-800 leading-tight text-center">
+            {{ __('ログイン種別の選択') }}
+        </h2>
+    </x-slot>
 
-@section('content')
-<div class="container text-center mt-5">
-    <h2>ログイン種別を選択してください</h2>
+    <div class="py-12 flex flex-col items-center justify-center space-y-6">
+        <p class="text-gray-700 text-lg mb-4">ログイン種別を選択してください：</p>
 
-    <form method="POST" action="{{ route('user.type.select') }}">
-        @csrf
-        <button type="submit" name="user_type" value="family" class="btn btn-primary m-3">
-            家庭用
-        </button>
-        <button type="submit" name="user_type" value="company" class="btn btn-secondary m-3">
-            企業用
-        </button>
-    </form>
-</div>
-@endsection
+        <form method="POST" action="{{ route('mode.store') }}">
+            @csrf
+            <div class="flex space-x-6">
+                <button type="submit" name="user_type" value="family"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg shadow">
+                    家庭用
+                </button>
+                <button type="submit" name="user_type" value="company"
+                    class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-lg shadow">
+                    企業用
+                </button>
+            </div>
+        </form>
+    </div>
+</x-app-layout>

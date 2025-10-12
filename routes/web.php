@@ -1,59 +1,52 @@
 <?php
 
+use App\Http\Controllers\ModeController;
 use App\Http\Controllers\MemoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ItemController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\PurchaseListController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ModeController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
+// ログイン後、選択ページへリダイレクト
 Route::get('/dashboard', function () {
-    $today = \Carbon\Carbon::today();
-
-    $expiredItems = \App\Models\Item::where('user_id', auth()->id())
-        ->whereDate('expiration_date', '<', $today)
-        ->get();
-
-    $nearExpiredItems = \App\Models\Item::where('user_id', auth()->id())
-        ->whereDate('expiration_date', '>=', $today)
-        ->whereDate('expiration_date', '<=', $today->copy()->addWeek())
-        ->get();
-
-    //ユーザーのメモ取得
-    $memos = \App\Models\Memo::with('item', 'user')
-        ->whereHas('item', function ($query) {
-            $query->where('user_id', auth()->id());
-        })
-        ->latest()
-        ->get();
-
-    return view('dashboard', compact('expiredItems', 'nearExpiredItems', 'memos'));
+    return redirect('/select');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// 家庭・企業の選択ページ
 Route::get('/select', function () {
-    return view('select');
-})->middleware('auth');
+    return view('mode.select');
+})->middleware('auth')->name('select');
 
-Route::get('/mode-select', [ModeController::class, 'select'])->name('mode.select');
-Route::post('/mode-select', [ModeController::class, 'store'])->name('mode.store');
+// 家庭・企業の選択ページ（GET）
+Route::get('/mode-select', [ModeController::class, 'select'])
+    ->middleware('auth')
+    ->name('mode.select');
 
-Route::get('/recipes', [RecipeController::class, 'index'])->name('recipes.index');
+// 家庭・企業の選択内容を処理（POST）
+Route::post('/mode-select', [ModeController::class, 'store'])
+    ->middleware('auth')
+    ->name('mode.store');
 
+// 家庭用ダッシュボード
 Route::get('/dashboard/home', [DashboardController::class, 'home'])
     ->name('dashboard.home')
     ->middleware('auth');
 
+// 企業用ダッシュボード
 Route::get('/dashboard/company', [DashboardController::class, 'company'])
     ->name('dashboard.company')
     ->middleware('auth');
 
+// レシピページ
+Route::get('/recipes', [RecipeController::class, 'index'])->name('recipes.index');
 
+// ログイン後にのみ利用可能なルート
 Route::middleware(['auth'])->group(function () {
     // 在庫
     Route::resource('items', ItemController::class);
@@ -69,10 +62,5 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/purchase-lists', [PurchaseListController::class, 'store'])->name('purchase_lists.store');
     Route::delete('/purchase-lists/{purchaseList}', [PurchaseListController::class, 'destroy'])->name('purchase_lists.destroy');
 });
-
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth'])
-    ->name('dashboard');
-
 
 require __DIR__.'/auth.php';
