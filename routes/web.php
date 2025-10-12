@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\PurchaseListController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ModeController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -35,8 +36,23 @@ Route::get('/dashboard', function () {
     return view('dashboard', compact('expiredItems', 'nearExpiredItems', 'memos'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::get('/select', function () {
+    return view('select');
+})->middleware('auth');
+
+Route::get('/mode-select', [ModeController::class, 'select'])->name('mode.select');
+Route::post('/mode-select', [ModeController::class, 'store'])->name('mode.store');
 
 Route::get('/recipes', [RecipeController::class, 'index'])->name('recipes.index');
+
+Route::get('/dashboard/home', [DashboardController::class, 'home'])
+    ->name('dashboard.home')
+    ->middleware('auth');
+
+Route::get('/dashboard/company', [DashboardController::class, 'company'])
+    ->name('dashboard.company')
+    ->middleware('auth');
+
 
 Route::middleware(['auth'])->group(function () {
     // 在庫
