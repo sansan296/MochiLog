@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ModeController;
 use App\Http\Controllers\MemoController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\PurchaseListController;
@@ -62,5 +62,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/purchase-lists', [PurchaseListController::class, 'store'])->name('purchase_lists.store');
     Route::delete('/purchase-lists/{purchaseList}', [PurchaseListController::class, 'destroy'])->name('purchase_lists.destroy');
 });
+
+
+    Route::middleware(['auth'])->group(function () {
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+});
+
 
 require __DIR__.'/auth.php';
