@@ -21,6 +21,10 @@
                     <x-nav-link :href="route('purchase_lists.index')" :active="request()->routeIs('purchase_lists.index')">
                         {{ __('購入予定品') }}
                     </x-nav-link>
+
+                    <x-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.index')">
+                        {{ __('履歴') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -90,7 +94,12 @@
             <x-responsive-nav-link :href="route('purchase_lists.index')" :active="request()->routeIs('purchase_lists.index')">
                 {{ __('購入予定品') }}
             </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.index')">
+                {{ __('履歴') }}
+            </x-responsive-nav-link>
         </div>
+
 
             <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-400">
