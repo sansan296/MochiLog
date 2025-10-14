@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('item_tag', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('item_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('tag_id')->constrained()->cascadeOnDelete();
-            $table->unique(['item_id','tag_id']);
-    });
-}
-
+            $table->foreignId('item_id')->constrained()->onDelete('cascade');
+            $table->foreignId('tag_id')->constrained()->onDelete('cascade');
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.
