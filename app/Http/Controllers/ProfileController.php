@@ -8,53 +8,60 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use App\Models\Profile;
+
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
-    public function edit(Request $request): View
+    public function edit(Request $request)
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
+        $profile = $request->user()->profile()->firstOrCreate([
+            'user_id' => $request->user()->id,
         ]);
+
+        return view('profile.edit', compact('profile'));
     }
 
-    /**
-     * Update the user's profile information.
-     */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request)
     {
-        $request->user()->fill($request->validated());
+        $profile = $request->user()->profile()->firstOrCreate([
+            'user_id' => $request->user()->id,
+        ]);
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // 共通＋条件付きバリデーション
+        $rules = [
+            'user_type' => ['required','in:household,enterprise'],
+            // household のとき必須
+            'gender'     => ['nullable','in:男性,女性,その他','required_if:user_type,household'],
+            'age'        => ['nullable','integer','min:0','max:150','required_if:user_type,household'],
+            'occupation' => ['nullable','string','max:255','required_if:user_type,household'],
+            // enterprise のとき必須
+            'contact_email' => ['nullable','email','max:255','required_if:user_type,enterprise'],
+            'phone'         => ['nullable','string','max:50','required_if:user_type,enterprise'],
+            'company_name'  => ['nullable','string','max:255','required_if:user_type,enterprise'],
+            'position'      => ['nullable','string','max:255','required_if:user_type,enterprise'],
+        ];
+
+        $validated = $request->validate($rules);
+
+        // household と enterprise で不要なフィールドはクリアしておくと安全
+        if ($validated['user_type'] === 'household') {
+            $validated = array_merge($validated, [
+                'contact_email' => null,
+                'phone' => null,
+                'company_name' => null,
+                'position' => null,
+            ]);
+        } else {
+            $validated = array_merge($validated, [
+                'gender' => null,
+                'age' => null,
+                'occupation' => null,
+            ]);
         }
 
-        $request->user()->save();
+        $profile->update($validated);
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
-    }
-
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
-    {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
-        ]);
-
-        $user = $request->user();
-
-        Auth::logout();
-
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
+        return redirect()->route('profile.edit')->with('status', 'プロフィールを更新しました');
     }
 }

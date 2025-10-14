@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-2xl text-gray-800 leading-tight text-center">
-            {{ __('通知') }}
+            {{ __('家庭用_通知') }}
         </h2>
     </x-slot>
 

@@ -1,45 +1,63 @@
 <?php
 
-use App\Http\Controllers\MemoController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ItemController;
+use App\Http\Controllers\{
+    AuditLogController,
+    ProfileController,
+    ModeController,
+    MemoController,
+    ItemController,
+    RecipeController,
+    PurchaseListController,
+    DashboardController,
+    AdminController
+};
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\RecipeController;
-use App\Http\Controllers\PurchaseListController;
-use App\Http\Controllers\DashboardController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+| ここでは、ユーザーと管理者それぞれのルートを定義します。
+| 「auth」ミドルウェアで通常ログイン済みユーザーを保護し、
+| 「auth:admin」で管理者ログイン専用の領域を保護します。
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/dashboard', function () {
-    $today = \Carbon\Carbon::today();
+// ----------------------------------------
+// 🌟 トップページ
+// ----------------------------------------
+Route::get('/', fn() => view('welcome'));
 
-    $expiredItems = \App\Models\Item::where('user_id', auth()->id())
-        ->whereDate('expiration_date', '<', $today)
-        ->get();
+// ----------------------------------------
+// 🌟 ログイン後：モード選択へリダイレクト
+// ----------------------------------------
+Route::get('/dashboard', fn() => redirect('/mode-select'))
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
-    $nearExpiredItems = \App\Models\Item::where('user_id', auth()->id())
-        ->whereDate('expiration_date', '>=', $today)
-        ->whereDate('expiration_date', '<=', $today->copy()->addWeek())
-        ->get();
+// ----------------------------------------
+// 🌟 家庭・企業の選択ページ
+// ----------------------------------------
+Route::get('/mode-select', [ModeController::class, 'select'])
+    ->middleware('auth')
+    ->name('mode.select');
+Route::post('/mode-select', [ModeController::class, 'store'])
+    ->middleware('auth')
+    ->name('mode.store');
 
-    //ユーザーのメモ取得
-    $memos = \App\Models\Memo::with('item', 'user')
-        ->whereHas('item', function ($query) {
-            $query->where('user_id', auth()->id());
-        })
-        ->latest()
-        ->get();
+// ----------------------------------------
+// 🌟 一般ユーザー用ルート（auth ミドルウェア）
+// ----------------------------------------
+Route::middleware('auth')->group(function () {
 
-    return view('dashboard', compact('expiredItems', 'nearExpiredItems', 'memos'));
-})->middleware(['auth', 'verified'])->name('dashboard');
+    // ダッシュボード（家庭 / 企業）
+    Route::get('/dashboard/home', [DashboardController::class, 'home'])->name('dashboard.home');
+    Route::get('/dashboard/company', [DashboardController::class, 'company'])->name('dashboard.company');
 
+    // レシピ
+    Route::get('/recipes', [RecipeController::class, 'index'])->name('recipes.index');
 
-Route::get('/recipes', [RecipeController::class, 'index'])->name('recipes.index');
-
-Route::middleware(['auth'])->group(function () {
-    // 在庫
+    // 在庫・メモ（リソースルート）
     Route::resource('items', ItemController::class);
     Route::resource('items.memos', MemoController::class);
 
@@ -51,12 +69,45 @@ Route::middleware(['auth'])->group(function () {
     // 購入リスト
     Route::get('/purchase-lists', [PurchaseListController::class, 'index'])->name('purchase_lists.index');
     Route::post('/purchase-lists', [PurchaseListController::class, 'store'])->name('purchase_lists.store');
-    Route::delete('/purchase-lists/{purchaseList}', [PurchaseListController::class, 'destroy'])->name('purchase_lists.destroy');
+    Route::delete('/purchase-lists/{purchaseList}', [PurchaseListController::class, 'destroy'])
+        ->whereNumber('purchaseList')
+        ->name('purchase_lists.destroy');
+
+    // 監査ログ
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+
+    // 旧ルート互換（監査ログ）
+    Route::get('/purchase-lists/audit-logs', fn () => redirect()->route('audit-logs.index'))
+        ->name('legacy.audit-logs');
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth'])
-    ->name('dashboard');
+
+// ====================================================================
+// 🌟 管理者用ルート群
+// ====================================================================
+Route::prefix('admin')->name('admin.')->group(function () {
+
+    // 管理者ログインページ
+    Route::get('/login', [AdminController::class, 'showLoginForm'])
+        ->name('login');
+    Route::post('/login', [AdminController::class, 'login'])
+        ->name('login.submit');
+
+    // 管理者専用領域（auth:admin ミドルウェア保護）
+    Route::middleware('auth:admin')->group(function () {
+
+        // 管理者ダッシュボード
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])
+            ->name('dashboard');
+
+        // 管理者ログアウト
+        Route::post('/logout', [AdminController::class, 'logout'])
+            ->name('logout');
+    });
+});
 
 
-require __DIR__.'/auth.php';
+// ----------------------------------------
+// 🌟 Laravel Breeze / Jetstream 認証ルート
+// ----------------------------------------
+require __DIR__ . '/auth.php';
