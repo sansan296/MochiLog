@@ -26,4 +26,10 @@ class Item extends Model
     {
         return $this->hasMany(Memo::class)->orderBy('created_at', 'desc');
     }
+
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class);
+    }
+
 }
