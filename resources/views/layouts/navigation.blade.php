@@ -25,6 +25,11 @@
                     <x-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.index')">
                         {{ __('履歴') }}
                     </x-nav-link>
+                    
+                    <x-nav-link :href="route('admin.login')" :active="request()->routeIs('admin.login')">
+                        {{ __('管理者ログイン') }}
+                    </x-nav-link>
+                   
                 </div>
             </div>
 
@@ -97,6 +102,10 @@
 
             <x-responsive-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.index')">
                 {{ __('履歴') }}
+            </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('admin.login')" :active="request()->routeIs('admin.login')">
+                {{ __('管理者ログイン') }}
             </x-responsive-nav-link>
         </div>
 
