@@ -15,11 +15,14 @@ class TagController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required','string','max:50','unique:tags,name'],
+            'name' => ['required', 'string', 'max:50'],
+            'item_id' => ['nullable', 'exists:items,id'],
         ]);
+
         $tag = Tag::create($validated);
         return response()->json($tag, 201);
     }
+
 
     public function destroy(Tag $tag)
     {

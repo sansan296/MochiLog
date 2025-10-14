@@ -8,34 +8,33 @@ use Illuminate\Http\Request;
 
 class ItemTagController extends Controller
 {
-    // 対象アイテムに対する全タグ＋付与状態を返す
-    public function list(Item $item)
+    // アイテムごとのタグ一覧
+    public function index(Item $item)
     {
-        $all = Tag::orderBy('name')->get(['id','name']);
-        $attached = $item->tags()->pluck('tags.id')->toArray();
+        $tags = Tag::orderBy('name')->get()
+            ->map(fn($tag) => [
+                'id' => $tag->id,
+                'name' => $tag->name,
+                'checked' => $item->tags->contains($tag->id),
+            ]);
 
-        $data = $all->map(fn($t) => [
-            'id' => $t->id,
-            'name' => $t->name,
-            'checked' => in_array($t->id, $attached),
-        ])->values();
-
-        return response()->json($data);
+        return response()->json($tags);
     }
 
-    // 1つのタグIDをトグル（付与/外す）
+    // タグの付与・削除トグル
     public function toggle(Item $item, Request $request)
     {
-        $validated = $request->validate([
-            'tag_id' => ['required','exists:tags,id'],
-            'checked' => ['required','boolean'],
+        $data = $request->validate([
+            'tag_id' => ['required', 'exists:tags,id'],
+            'checked' => ['required', 'boolean'],
         ]);
-        if ($validated['checked']) {
-            $item->tags()->syncWithoutDetaching([$validated['tag_id']]);
+
+        if ($data['checked']) {
+            $item->tags()->syncWithoutDetaching([$data['tag_id']]);
         } else {
-            $item->tags()->detach($validated['tag_id']);
+            $item->tags()->detach($data['tag_id']);
         }
+
         return response()->json(['ok' => true]);
     }
 }
-

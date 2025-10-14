@@ -19,9 +19,8 @@ use App\Http\Controllers\{
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-| ここでは、一般ユーザー・管理者それぞれのルートを整理しています。
-| 「auth」ミドルウェアで通常ユーザーを保護、
-| 「auth:admin」で管理者専用エリアを保護します。
+| 一般ユーザー・管理者のルート定義
+| 「auth」＝一般ユーザー、「auth:admin」＝管理者専用。
 |--------------------------------------------------------------------------
 */
 
@@ -68,13 +67,15 @@ Route::middleware('auth')->group(function () {
     Route::resource('items.memos', MemoController::class);
 
     // -------------------------------
-    // 🏷 タグ関連（追加・削除・編集）
+    // 🏷 タグ関連
     // -------------------------------
+    // タグマスタ管理
     Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
     Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
     Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
 
-    Route::get('/items/{item}/tags', [ItemTagController::class, 'list'])->name('items.tags.list');
+    // アイテムごとのタグ付け・解除
+    Route::get('/items/{item}/tags', [ItemTagController::class, 'index'])->name('items.tags.index');
     Route::post('/items/{item}/tags/toggle', [ItemTagController::class, 'toggle'])->name('items.tags.toggle');
 
     // -------------------------------
@@ -98,7 +99,7 @@ Route::middleware('auth')->group(function () {
     // -------------------------------
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
-    // 旧URL互換：/purchase-lists/audit-logs → /audit-logs
+    // 旧URL互換
     Route::get('/purchase-lists/audit-logs', fn() => redirect()->route('audit-logs.index'))
         ->name('legacy.audit-logs');
 });
@@ -109,13 +110,13 @@ Route::middleware('auth')->group(function () {
 Route::prefix('admin')->name('admin.')->group(function () {
 
     // -------------------------------
-    // 🔑 管理者ログインページ
+    // 🔑 管理者ログイン
     // -------------------------------
     Route::get('/login', [AdminController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AdminController::class, 'login'])->name('login.submit');
 
     // -------------------------------
-    // 🧭 管理者専用領域
+    // 🧭 管理者専用ページ
     // -------------------------------
     Route::middleware('auth:admin')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
@@ -124,6 +125,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 // ====================================================================
-// 🌟 Laravel Breeze / Jetstream 標準認証ルート
+// 🌟 Laravel Breeze / Jetstream 認証ルート
 // ====================================================================
 require __DIR__ . '/auth.php';
