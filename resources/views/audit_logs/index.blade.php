@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl">監査ログ</h2>
+        <h2 class="font-semibold text-xl">操作履歴</h2>
     </x-slot>
 
     <div class="py-6 max-w-7xl mx-auto">

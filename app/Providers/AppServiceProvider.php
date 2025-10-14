@@ -1,22 +1,27 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Providers;
 
-use App\Models\AuditLog;
-use Illuminate\Http\Request;
+use Illuminate\Support\ServiceProvider;
+use App\Models\Item;
+use App\Observers\ItemObserver;
 
-class AuditLogController extends Controller
+class AppServiceProvider extends ServiceProvider
 {
-    public function index(Request $request)
+    /**
+     * Register any application services.
+     */
+    public function register(): void
     {
-        $q = AuditLog::query()->with('user')
-            ->latest()
-            ->when($request->filled('action'), fn($qq) => $qq->where('action', $request->action))
-            ->when($request->filled('target_type'), fn($qq) => $qq->where('target_type', $request->target_type))
-            ->when($request->filled('target_id'), fn($qq) => $qq->where('target_id', $request->target_id));
+        //
+    }
 
-        $logs = $q->paginate(20);
-
-        return view('audit_logs.index', compact('logs'));
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        // 在庫(Item)の作成・更新・削除時に監査ログを自動記録
+        Item::observe(ItemObserver::class);
     }
 }
