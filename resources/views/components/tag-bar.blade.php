@@ -121,29 +121,35 @@
         this.error = '';
         this.createModal = true;
       },
+      
       async createTag() {
-        try {
-          this.error = '';
-          const res = await fetch(`{{ route('tags.store') }}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type':'application/json',
-              'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            },
-            body: JSON.stringify({ name: this.newTagName.trim() })
-          });
-          if (!res.ok) {
-            const e = await res.json();
-            this.error = e.message ?? '作成に失敗しました';
-            return;
-          }
-          this.createModal = false;
-          await this.fetchTags();
-          // 編集パネルを開いているなら更新
-          if (this.editPanel && this.itemId) this.openEditPanel(true);
-        } catch (e) {
-          this.error = '通信エラー';
+    try {
+        this.error = '';
+        const res = await fetch(`{{ route('tags.store') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        },
+        body: JSON.stringify({
+            name: this.newTagName.trim(),
+            item_id: this.itemId, // ← これが重要！！
+        })
+        });
+        if (!res.ok) {
+        const e = await res.json();
+        this.error = e.message ?? '作成に失敗しました';
+        return;
         }
+        this.createModal = false;
+        await this.fetchTags();
+    } catch (e) {
+        this.error = '通信エラー';
+    }
+    }
+
+
+
       },
       openTagContextMenu(ev, tag) {
         this.contextMenu = { show:true, x:ev.pageX, y:ev.pageY, target:tag };

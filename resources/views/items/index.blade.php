@@ -38,39 +38,37 @@
     <div class="bg-[#9cbcf0ff] overflow-hidden shadow-sm sm:rounded-lg p-6">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach ($items as $item)
-          <div class="p-4 bg-white rounded-lg shadow hover:shadow-md transition">
-            <p class="text-lg font-semibold">{{ $item->item }}</p>
-            
-            <p class="text-gray-800 text-base">
-              賞味期限：
-              @if ($item->expiration_date)
-                @if ($item->expiration_date->isPast())
-                  <span class="text-[#EE2E48] font-bold">
-                    {{ $item->expiration_date->format('Y/m/d') }}（期限切れ）
-                  </span>
-                @else
-                  {{ $item->expiration_date->format('Y/m/d') }}
-                  （あと {{ ceil(now()->floatDiffInRealDays($item->expiration_date)) }} 日）
-                @endif
-              @else
-                なし
-              @endif
-            </p>
 
-            <p class="text-gray-800 text-base">
-              個数：{{ $item->quantity }}
-            </p>
+        <div class="p-4 bg-white rounded-lg shadow" x-data="tagBar({ itemId: {{ $item->id }} })">
+  <p class="text-lg font-semibold mb-2">{{ $item->item }}</p>
 
-            <p class="text-gray-600 text-sm mb-2">登録者：{{ $item->user->name }}</p>
+  <!-- タグバー -->
+  <x-tag-bar :item-id="$item->id" />
 
-            {{-- タグバーを追加 --}}
-            <x-tag-bar :item-id="$item->id" />
+  <p class="text-gray-800 text-base">
+    賞味期限：
+    @if ($item->expiration_date)
+      @if ($item->expiration_date->isPast())
+        <span class="text-[#EE2E48] font-bold">
+          {{ $item->expiration_date->format('Y/m/d') }}（期限切れ）
+        </span>
+      @else
+        {{ $item->expiration_date->format('Y/m/d') }}
+        （あと {{ ceil(now()->floatDiffInRealDays($item->expiration_date)) }} 日）
+      @endif
+    @else
+      なし
+    @endif
+  </p>
 
-            <a href="{{ route('items.show', $item) }}"
-               class="block text-right text-[#4973B5] hover:text-[#2C5BA5] font-medium mt-2">
-              詳細 →
-            </a>
-          </div>
+  <p class="text-gray-800 text-base">個数：{{ $item->quantity }}</p>
+  <p class="text-gray-600 text-sm mb-2">登録者：{{ $item->user->name }}</p>
+
+  <a href="{{ route('items.show', $item) }}" class="block text-right text-[#4973B5] hover:text-[#2C5BA5] font-medium mt-2">
+    詳細 →
+  </a>
+</div>
+
         @endforeach
       </div>
     </div>

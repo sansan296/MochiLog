@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tag extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['item_id', 'name'];
 
-    public function items()
+    public function item()
     {
-        return $this->belongsToMany(Item::class);
+        return $this->belongsTo(Item::class);
     }
 }
+
