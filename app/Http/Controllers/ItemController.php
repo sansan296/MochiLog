@@ -57,4 +57,26 @@ class ItemController extends Controller
         return redirect()->route('items.index')
             ->with('success', '在庫を追加しました。');
     }
+
+    public function show($id)
+    {
+        $item = \App\Models\Item::with(['user', 'memos', 'tags'])->findOrFail($id);
+        return view('items.show', compact('item'));
+    }
+
+    public function edit($id)
+    {
+        $item = \App\Models\Item::with(['tags'])->findOrFail($id);
+
+        // 賞味期限を分解（年・月・日をフォーム初期値に）
+        $expiration = ['year' => null, 'month' => null, 'day' => null];
+        if ($item->expiration_date) {
+            $expiration['year'] = $item->expiration_date->format('Y');
+            $expiration['month'] = $item->expiration_date->format('m');
+            $expiration['day'] = $item->expiration_date->format('d');
+        }
+
+        return view('items.edit', compact('item', 'expiration'));
+    }
+
 }
