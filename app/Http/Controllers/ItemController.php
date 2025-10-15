@@ -13,7 +13,7 @@ class ItemController extends Controller
      */
 public function index(Request $request) 
 {
-    $query = Item::query()->with('user');
+    $query = Item::query()->with(['user', 'tags']);
 
     if ($keyword = $request->input('keyword')) {
         $query->where('item', 'like', "%{$keyword}%");
@@ -157,4 +157,12 @@ public function index(Request $request)
 
         return redirect()->route('items.index');
     }
+
+    public function addTag(Request $request, Item $item)
+    {
+        $validated = $request->validate(['name' => 'required|string|max:255']);
+        $item->tags()->create(['name' => $validated['name']]);
+        return back();
+    }
+
 }
