@@ -4,38 +4,44 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Tag;
-use App\Models\Item;
 
 class TagController extends Controller
 {
+    /**
+     * タグ一覧を取得（JSON）
+     * /tags にアクセスしたとき、全タグを返す
+     */
     public function index()
     {
-        // 全タグをJSONで返す
-        return response()->json(Tag::all());
+        $tags = Tag::orderBy('id', 'asc')->get();
+        return response()->json($tags);
     }
 
+    /**
+     * 新しいタグを作成（＋ボタン）
+     * 同名タグが既に存在する場合はエラーを返す
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'item_id' => 'nullable|integer|exists:items,id',
+            'name' => 'required|string|max:255|unique:tags,name',
         ]);
 
-        // タグ作成（同名があれば取得）
-        $tag = Tag::firstOrCreate(['name' => $validated['name']]);
-
-        // item_idがあれば中間テーブルに紐づけ
-        if ($request->filled('item_id')) {
-            $item = Item::findOrFail($request->item_id);
-            $item->tags()->syncWithoutDetaching([$tag->id]);
-        }
+        $tag = Tag::create(['name' => $validated['name']]);
 
         return response()->json($tag, 201);
     }
 
+    /**
+     * タグを削除（右クリックなどで使う想定）
+     * 関連する item_tag も自動的に削除される（DB制約により）
+     */
     public function destroy(Tag $tag)
     {
         $tag->delete();
-        return response()->json(['message' => 'タグを削除しました。']);
+
+        return response()->json([
+            'message' => "タグ「{$tag->name}」を削除しました。"
+        ]);
     }
 }

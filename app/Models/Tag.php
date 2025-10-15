@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Tag extends Model
 {
-    protected $fillable = ['item_id', 'name'];
+    use HasFactory;
 
-    public function item()
+    protected $fillable = ['name'];
+
+    public function items()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsToMany(Item::class);
     }
 }
-
