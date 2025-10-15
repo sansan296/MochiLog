@@ -14,17 +14,21 @@ class TagController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        // JSON対応
+        $data = $request->json()->all();
+
+        $validated = validator($data, [
             'name' => 'required|string|max:255',
             'item_id' => 'nullable|exists:items,id',
+        ])->validate();
+
+        $tag = Tag::create([
+            'name' => $validated['name'],
+            'item_id' => $validated['item_id'] ?? null,
         ]);
 
-        $tag = \App\Models\Tag::create([
-            'name' => $request->name,
-            'item_id' => $request->item_id,
-        ]);
-
-        return response()->json($tag);
+        // フロントがfetchで受け取るのでJSON返却
+        return response()->json($tag, 201);
     }
 
 
