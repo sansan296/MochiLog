@@ -53,16 +53,6 @@
               </div>
             </div>
 
-            <!-- 🏷 タグ追加 -->
-            <div class="mb-6">
-              <label class="block text-gray-800 text-sm font-bold mb-2">▼タグの追加</label>
-              {{-- 🔹 閲覧ではなく「作成モード」でタグバーを使用 --}}
-              <x-tag-bar mode="create" />
-              <p class="text-xs text-gray-500 mt-1">
-                ※タグは全体で共通です。ここで新しいタグを作成できます。
-              </p>
-            </div>
-
             <!-- 追加ボタン -->
             <button 
               type="submit" 

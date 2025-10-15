@@ -5,7 +5,7 @@
     </h2>
   </x-slot>
 
-  {{-- Alpine.js 読み込み（必ず最初に！） --}}
+  {{-- Alpine.js 読み込み --}}
   <script src="https://unpkg.com/alpinejs" defer></script>
 
   <div class="py-4 max-w-7xl mx-auto sm:px-6 lg:px-8"
@@ -32,7 +32,7 @@
     </form>
 
     {{-- 🏷 タグ追加・絞り込み --}}
-    <div class="mb-8 bg-white shadow-sm rounded-lg p-4">
+    <div class="mb-8 bg-white shadow-sm rounded-lg p-4 relative">
       <div class="flex items-center flex-wrap gap-2 mb-3">
         {{-- タグ一覧 --}}
         <template x-for="tag in tags" :key="tag.id">
@@ -43,8 +43,9 @@
               ? 'bg-indigo-600 text-white border-indigo-600'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
             x-text="tag.name"
-            @click="toggleTagFilter(tag.id)">
-          </button>
+            @click="toggleTagFilter(tag.id)"
+            @contextmenu.prevent="openTagContextMenu($event, tag)"  {{-- 右クリックメニュー --}}
+          ></button>
         </template>
 
         {{-- ＋ボタン（新規タグ追加） --}}
@@ -53,6 +54,24 @@
                 @click="openCreateModal()">＋</button>
       </div>
       <p class="text-sm text-gray-500">タグをクリックして在庫を絞り込みできます（複数選択可）</p>
+
+      {{-- ✨ 右クリックメニュー --}}
+      <div
+        x-show="contextMenu.show"
+        x-transition
+        @click.outside="contextMenu.show=false"
+        class="fixed z-50 bg-white border shadow rounded-md text-sm"
+        :style="`top:${contextMenu.y}px;left:${contextMenu.x}px`"
+      >
+        <div class="py-1">
+          <button
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100"
+            @click="openEditTag()">タグを編集</button>
+          <button
+            class="block w-full text-left px-4 py-2 hover:bg-red-50 text-red-600"
+            @click="confirmDeleteTag()">削除</button>
+        </div>
+      </div>
     </div>
 
     {{-- 📦 在庫一覧 --}}
@@ -129,40 +148,26 @@
       createModal: false,
       newTagName: '',
       error: '',
+      contextMenu: { show: false, x: 0, y: 0, target: null },
 
       async init() {
-        console.log('🔄 Alpine init start');
         await this.fetchTags();
         await this.fetchItems();
-        console.log('✅ Alpine init complete');
       },
 
-      // タグ一覧取得
       async fetchTags() {
-        try {
-          const res = await fetch(`{{ route('tags.index') }}`);
-          if (!res.ok) throw new Error('タグ取得に失敗');
-          this.tags = await res.json();
-        } catch (e) {
-          console.error('タグ取得エラー:', e);
-        }
+        const res = await fetch(`{{ route('tags.index') }}`);
+        this.tags = await res.json();
       },
 
-      // 在庫一覧取得
       async fetchItems() {
-        try {
-          const res = await fetch(`{{ route('items.index') }}?json=1`, {
-            headers: { 'Accept': 'application/json' }
-          });
-          if (!res.ok) throw new Error('在庫取得に失敗');
-          this.items = await res.json();
-          this.filteredItems = this.items;
-        } catch (e) {
-          console.error('在庫取得エラー:', e);
-        }
+        const res = await fetch(`{{ route('items.index') }}?json=1`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        this.items = await res.json();
+        this.filteredItems = this.items;
       },
 
-      // タグ絞り込み切替
       toggleTagFilter(tagId) {
         if (this.selectedTags.includes(tagId)) {
           this.selectedTags = this.selectedTags.filter(id => id !== tagId);
@@ -172,7 +177,6 @@
         this.applyFilter();
       },
 
-      // 絞り込み適用
       applyFilter() {
         if (this.selectedTags.length === 0) {
           this.filteredItems = this.items;
@@ -183,36 +187,62 @@
         );
       },
 
-      // タグ作成モーダル
       openCreateModal() {
         this.newTagName = '';
         this.error = '';
         this.createModal = true;
       },
 
-      // タグ作成
       async createTag() {
-        try {
-          const res = await fetch(`{{ route('tags.store') }}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-TOKEN': '{{ csrf_token() }}',
-              'Accept': 'application/json',
-            },
-            body: JSON.stringify({ name: this.newTagName.trim() })
-          });
-          if (!res.ok) {
-            const e = await res.json().catch(() => ({}));
-            this.error = e.message ?? '作成に失敗しました';
-            return;
-          }
+        const res = await fetch(`{{ route('tags.store') }}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          },
+          body: JSON.stringify({ name: this.newTagName.trim() }),
+        });
+        if (res.ok) {
           this.createModal = false;
           await this.fetchTags();
-        } catch (e) {
-          console.error('タグ作成エラー:', e);
-          this.error = '通信エラー';
+        } else {
+          this.error = '作成に失敗しました';
         }
+      },
+
+      openTagContextMenu(ev, tag) {
+        ev.preventDefault();
+        this.contextMenu = { show: true, x: ev.pageX, y: ev.pageY, target: tag };
+      },
+
+      async openEditTag() {
+        if (!this.contextMenu.target) return;
+        const newName = prompt("新しいタグ名を入力してください", this.contextMenu.target.name);
+        if (!newName || newName.trim() === this.contextMenu.target.name) {
+          this.contextMenu.show = false;
+          return;
+        }
+        const res = await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          },
+          body: JSON.stringify({ name: newName.trim() }),
+        });
+        this.contextMenu.show = false;
+        await this.fetchTags();
+      },
+
+      async confirmDeleteTag() {
+        if (!this.contextMenu.target) return;
+        if (!confirm(`「${this.contextMenu.target.name}」を削除しますか？`)) return;
+        const res = await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
+          method: 'DELETE',
+          headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        });
+        this.contextMenu.show = false;
+        await this.fetchTags();
       },
 
       formatExpiration(dateStr) {
@@ -223,24 +253,18 @@
         const d = String(date.getDate()).padStart(2, '0');
         const now = new Date();
         const diff = Math.ceil((date - now) / (1000 * 60 * 60 * 24));
-        if (diff < 0) {
-          return `${y}/${m}/${d}（期限切れ）`;
-        } else {
-          return `${y}/${m}/${d}（あと ${diff} 日）`;
-        }
+        return diff < 0 ? `${y}/${m}/${d}（期限切れ）` : `${y}/${m}/${d}（あと ${diff} 日）`;
       },
 
       isExpired(dateStr) {
         if (!dateStr) return false;
-        const date = new Date(dateStr);
-        return date < new Date();
+        return new Date(dateStr) < new Date();
       },
-
-     }
+    };
   }
   </script>
   @endpush
 </x-app-layout>
 
-{{-- ✅ ここに置くことでスクリプトが確実に読み込まれる --}}
+{{-- ✅ スクリプト読み込み --}}
 @stack('scripts')
