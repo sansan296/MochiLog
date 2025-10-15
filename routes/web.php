@@ -66,17 +66,17 @@ Route::middleware('auth')->group(function () {
     Route::resource('items', ItemController::class);
     Route::resource('items.memos', MemoController::class);
 
-    // -------------------------------
     // 🏷 タグ関連
-    // -------------------------------
-    // タグマスタ管理
+Route::middleware('auth')->group(function () {
+    // タグ一覧・作成・削除
     Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
     Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
     Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
 
-    // アイテムごとのタグ付け・解除
+    // アイテムごとのタグ操作
     Route::get('/items/{item}/tags', [ItemTagController::class, 'index'])->name('items.tags.index');
     Route::post('/items/{item}/tags/toggle', [ItemTagController::class, 'toggle'])->name('items.tags.toggle');
+});
 
     // -------------------------------
     // 👤 プロフィール
@@ -123,6 +123,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
     });
 });
+
 
 // ====================================================================
 // 🌟 Laravel Breeze / Jetstream 認証ルート

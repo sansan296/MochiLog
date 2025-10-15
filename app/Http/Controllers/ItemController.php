@@ -11,29 +11,22 @@ class ItemController extends Controller
     /**
      * Display a listing of the resource.
      */
-public function index(Request $request) 
-{
-    $query = Item::query()->with('user');
+// app/Http/Controllers/ItemController.php
+    public function index(Request $request)
+    {
+        // 通常のページ表示用（ページネーション等）
+        $query = Item::with(['tags', 'user'])->orderBy('id', 'desc');
 
-    if ($keyword = $request->input('keyword')) {
-        $query->where('item', 'like', "%{$keyword}%");
+        if ($request->boolean('json')) {
+            // フロントのAlpineが使う「一覧API」
+            return response()->json($query->get());
+        }
+
+        // 既存のBlade描画（ここはそのまま）
+        $items = $query->paginate(12); // 例
+        $totalQuantity = $items->sum('quantity');
+        return view('items.index', compact('items', 'totalQuantity'));
     }
-
-    $items = $query
-        ->orderByRaw("CASE 
-            WHEN expiration_date IS NULL THEN 3
-            WHEN expiration_date < NOW() THEN 1
-            WHEN expiration_date < NOW() + INTERVAL 7 DAY THEN 2
-            ELSE 3 END")
-        ->orderBy('expiration_date', 'asc')
-        ->paginate(12);
-
-    $totalQuantity = (clone $query)->sum('quantity');
-
-    return view('items.index', compact('items', 'totalQuantity'));
-}
-
-
 
     /**
      * Show the form for creating a new resource.
@@ -157,4 +150,12 @@ public function index(Request $request)
 
         return redirect()->route('items.index');
     }
+
+    public function addTag(Request $request, Item $item)
+    {
+        $validated = $request->validate(['name' => 'required|string|max:255']);
+        $item->tags()->create(['name' => $validated['name']]);
+        return back();
+    }
+
 }
