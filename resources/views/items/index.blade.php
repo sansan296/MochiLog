@@ -5,6 +5,9 @@
     </h2>
   </x-slot>
 
+  {{-- Alpine.js 読み込み（必ず最初に！） --}}
+  <script src="https://unpkg.com/alpinejs" defer></script>
+
   <div class="py-4 max-w-7xl mx-auto sm:px-6 lg:px-8"
        x-data="tagFilter()"
        x-init="init()">
@@ -70,9 +73,19 @@
               </template>
             </div>
 
-            <p class="text-gray-800 text-base">
-              賞味期限：<span x-text="item.expiration_date ?? 'なし'"></span>
+            <p class="text-gray-800 text-base mt-2">
+              賞味期限：
+              <template x-if="item.expiration_date">
+                <span
+                  x-text="formatExpiration(item.expiration_date)"
+                  :class="isExpired(item.expiration_date) ? 'text-[#EE2E48] font-bold' : ''">
+                </span>
+              </template>
+              <template x-if="!item.expiration_date">
+                <span>なし</span>
+              </template>
             </p>
+
             <p class="text-gray-800 text-base">個数：<span x-text="item.quantity"></span></p>
             <p class="text-gray-600 text-sm mb-2">登録者：<span x-text="item.user.name"></span></p>
 
@@ -86,7 +99,9 @@
     </div>
 
     {{-- 🧾 タグ作成モーダル --}}
-    <div x-show="createModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div x-show="createModal"
+         x-transition
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div class="bg-white rounded-xl p-6 w-80">
         <h3 class="font-semibold mb-3">新しいタグを追加</h3>
         <input type="text" x-model="newTagName"
@@ -102,7 +117,7 @@
 
   </div>
 
-  {{-- Alpine.jsロジック --}}
+  {{-- ✅ Alpine.jsロジック --}}
   @push('scripts')
   <script>
   function tagFilter() {
@@ -116,22 +131,24 @@
       error: '',
 
       async init() {
+        console.log('🔄 Alpine init start');
         await this.fetchTags();
         await this.fetchItems();
+        console.log('✅ Alpine init complete');
       },
 
-      // タグ一覧を取得
+      // タグ一覧取得
       async fetchTags() {
         try {
           const res = await fetch(`{{ route('tags.index') }}`);
           if (!res.ok) throw new Error('タグ取得に失敗');
           this.tags = await res.json();
         } catch (e) {
-          console.error(e);
+          console.error('タグ取得エラー:', e);
         }
       },
 
-      // 在庫一覧を取得
+      // 在庫一覧取得
       async fetchItems() {
         try {
           const res = await fetch(`{{ route('items.index') }}?json=1`, {
@@ -141,11 +158,11 @@
           this.items = await res.json();
           this.filteredItems = this.items;
         } catch (e) {
-          console.error(e);
+          console.error('在庫取得エラー:', e);
         }
       },
 
-      // タグクリックで絞り込み切り替え
+      // タグ絞り込み切替
       toggleTagFilter(tagId) {
         if (this.selectedTags.includes(tagId)) {
           this.selectedTags = this.selectedTags.filter(id => id !== tagId);
@@ -166,14 +183,14 @@
         );
       },
 
-      // タグ追加モーダル
+      // タグ作成モーダル
       openCreateModal() {
         this.newTagName = '';
         this.error = '';
         this.createModal = true;
       },
 
-      // タグ作成処理
+      // タグ作成
       async createTag() {
         try {
           const res = await fetch(`{{ route('tags.store') }}`, {
@@ -193,11 +210,37 @@
           this.createModal = false;
           await this.fetchTags();
         } catch (e) {
+          console.error('タグ作成エラー:', e);
           this.error = '通信エラー';
         }
       },
-    }
+
+      formatExpiration(dateStr) {
+        if (!dateStr) return 'なし';
+        const date = new Date(dateStr);
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const now = new Date();
+        const diff = Math.ceil((date - now) / (1000 * 60 * 60 * 24));
+        if (diff < 0) {
+          return `${y}/${m}/${d}（期限切れ）`;
+        } else {
+          return `${y}/${m}/${d}（あと ${diff} 日）`;
+        }
+      },
+
+      isExpired(dateStr) {
+        if (!dateStr) return false;
+        const date = new Date(dateStr);
+        return date < new Date();
+      },
+
+     }
   }
   </script>
   @endpush
 </x-app-layout>
+
+{{-- ✅ ここに置くことでスクリプトが確実に読み込まれる --}}
+@stack('scripts')
