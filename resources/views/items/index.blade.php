@@ -85,11 +85,17 @@
           <div class="p-4 bg-white rounded-lg shadow">
             <p class="text-lg font-semibold mb-2" x-text="item.item"></p>
 
-            {{-- 🏷 タグ表示 --}}
+            {{-- 🏷 タグ表示 + 追加ボタン --}}
             <div class="flex flex-wrap gap-1 mb-2">
               <template x-for="t in item.tags" :key="t.id">
                 <span class="px-2 py-1 text-xs bg-gray-100 border rounded-full" x-text="t.name"></span>
               </template>
+              {{-- ➕ 商品別タグ追加ボタン --}}
+              <button
+                class="px-2 py-1 text-xs bg-indigo-500 text-white rounded-full hover:bg-indigo-600"
+                @click="openItemTagModal(item.id)">
+                ＋
+              </button>
             </div>
 
             <p class="text-gray-800 text-base mt-2">
@@ -134,6 +140,28 @@
       </div>
     </div>
 
+    {{-- 🏷 商品別タグ追加モーダル --}}
+    <div x-show="itemTagModal.show"
+         x-transition
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div class="bg-white rounded-xl p-6 w-80">
+        <h3 class="font-semibold mb-3">この商品にタグを追加</h3>
+
+        <input type="text"
+          x-model="itemTagModal.name"
+          class="w-full border rounded px-3 py-2"
+          placeholder="例）冷凍・おすすめなど">
+
+        <div class="mt-4 flex justify-end gap-2">
+          <button type="button" class="px-3 py-2" @click="itemTagModal.show=false">キャンセル</button>
+          <button type="button" class="px-3 py-2 bg-indigo-600 text-white rounded"
+            @click="addTagToItem()">追加</button>
+        </div>
+
+        <p x-show="itemTagModal.error" class="text-sm text-red-600 mt-2" x-text="itemTagModal.error"></p>
+      </div>
+    </div>
+
   </div>
 
   {{-- ✅ Alpine.jsロジック --}}
@@ -149,6 +177,7 @@
       newTagName: '',
       error: '',
       contextMenu: { show: false, x: 0, y: 0, target: null },
+      itemTagModal: { show: false, itemId: null, name: '', error: '' },
 
       async init() {
         await this.fetchTags();
@@ -222,7 +251,7 @@
           this.contextMenu.show = false;
           return;
         }
-        const res = await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
+        await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -237,12 +266,43 @@
       async confirmDeleteTag() {
         if (!this.contextMenu.target) return;
         if (!confirm(`「${this.contextMenu.target.name}」を削除しますか？`)) return;
-        const res = await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
+        await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
           method: 'DELETE',
           headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         });
         this.contextMenu.show = false;
         await this.fetchTags();
+      },
+
+      // 🔽 商品別タグ追加処理
+      openItemTagModal(id) {
+        this.itemTagModal = { show: true, itemId: id, name: '', error: '' };
+      },
+
+      async addTagToItem() {
+        const name = this.itemTagModal.name.trim();
+        if (!name) {
+          this.itemTagModal.error = 'タグ名を入力してください';
+          return;
+        }
+        const res = await fetch(`{{ route('tags.store') }}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          },
+          body: JSON.stringify({
+            name: name,
+            item_id: this.itemTagModal.itemId,
+          }),
+        });
+
+        if (res.ok) {
+          this.itemTagModal.show = false;
+          await this.fetchItems(); // 更新反映
+        } else {
+          this.itemTagModal.error = '追加に失敗しました';
+        }
       },
 
       formatExpiration(dateStr) {

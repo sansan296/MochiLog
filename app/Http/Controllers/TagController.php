@@ -15,13 +15,18 @@ class TagController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:tags,name',
+            'name' => 'required|string|max:255',
+            'item_id' => 'nullable|exists:items,id',
         ]);
 
-        $tag = Tag::create(['name' => $request->name]);
+        $tag = \App\Models\Tag::create([
+            'name' => $request->name,
+            'item_id' => $request->item_id,
+        ]);
 
-        return response()->json($tag, 201);
+        return response()->json($tag);
     }
+
 
     public function update(Request $request, $id)
     {
