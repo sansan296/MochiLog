@@ -136,7 +136,35 @@
         this.contextMenu.show = false;
         await this.fetchTags();
       },
-      async openEditPanel() { /* 省略：編集モード専用機能 */ },
+
+      async openEditPanel() {
+        if (this.mode !== 'edit' || !this.contextMenu.target) return;
+
+        const newName = prompt("新しいタグ名を入力してください", this.contextMenu.target.name);
+        if (!newName || newName.trim() === this.contextMenu.target.name) {
+          this.contextMenu.show = false;
+          return;
+        }
+
+        try {
+          const response = await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ name: newName.trim() })
+          });
+
+          if (!response.ok) throw new Error("更新に失敗しました");
+
+          this.contextMenu.show = false;
+          await this.fetchTags();
+        } catch (e) {
+          alert(e.message || '通信エラーが発生しました');
+        }
+      },
+
       async toggleItemTag() { /* 省略 */ },
     }
   }

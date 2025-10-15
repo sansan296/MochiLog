@@ -27,6 +27,13 @@ class ItemController extends Controller
         return view('items.index', compact('items', 'totalQuantity'));
     }
 
+    public function create()
+    {
+        // 登録用フォームを表示
+        return view('items.create');
+    }
+
+
     public function store(Request $request)
     {
         $validated = $request->validate([
