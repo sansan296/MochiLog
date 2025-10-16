@@ -10,11 +10,11 @@ class TagController extends Controller
 {
     /**
      * タグ一覧をJSONで返す
+     * → 全体タグ + 商品タグの両方を返す（絞り込みに必要）
      */
     public function index()
     {
-          // item_id が null（全体タグ）のみ取得
-        return response()->json(Tag::whereNull('item_id')->orderBy('id')->get());
+        return response()->json(Tag::orderBy('id')->get());
     }
 
     /**
@@ -27,18 +27,35 @@ class TagController extends Controller
             'item_id' => 'nullable|exists:items,id',
         ]);
 
-        $tag = Tag::create([
-            'name' => $validated['name'],
-            'item_id' => $validated['item_id'] ?? null,
-        ]);
+        // ✅ 商品に紐付けるタグの場合（item_idあり）
+        if (!empty($validated['item_id'])) {
+            $item = Item::findOrFail($validated['item_id']);
+
+            // 同じ名前のタグがすでに存在するかチェック
+            $tag = Tag::firstOrCreate(
+                ['name' => $validated['name']],
+                ['item_id' => null] // 全体タグを再利用
+            );
+
+            // 商品にタグを紐付け（中間テーブルを使用している場合）
+            if (method_exists($item, 'tags')) {
+                $item->tags()->syncWithoutDetaching([$tag->id]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'tag' => $tag,
+            ]);
+        }
+
+        // ✅ 全体タグとして登録（item_idなし）
+        $tag = Tag::firstOrCreate(['name' => $validated['name']]);
 
         return response()->json([
             'success' => true,
             'tag' => $tag,
         ]);
     }
-
-
 
     /**
      * タグ名を更新（重複名も許可）
@@ -49,7 +66,7 @@ class TagController extends Controller
             $data = $request->json()->all();
 
             $validated = validator($data, [
-                'name' => 'required|string|max:255', // ← unique制約を削除
+                'name' => 'required|string|max:255',
             ])->validate();
 
             $tag = Tag::findOrFail($id);
@@ -70,6 +87,11 @@ class TagController extends Controller
      */
     public function destroy(Tag $tag)
     {
+        // 商品との紐付け解除（中間テーブルを使用している場合）
+        if (method_exists($tag, 'items')) {
+            $tag->items()->detach();
+        }
+
         $tag->delete();
         return response()->json(['message' => 'タグを削除しました。']);
     }

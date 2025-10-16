@@ -5,7 +5,6 @@
     </h2>
   </x-slot>
 
-  {{-- Alpine.js 読み込み --}}
   <script src="https://unpkg.com/alpinejs" defer></script>
 
   <div class="py-4 max-w-7xl mx-auto sm:px-6 lg:px-8"
@@ -38,7 +37,7 @@
         <template x-for="tag in tags" :key="tag.id">
           <button
             type="button"
-            class="px-3 py-1 rounded-full border text-sm transition"
+            class="px-3 py-1 rounded-full border text-sm transition-all duration-300"
             :class="selectedTags.includes(tag.id)
               ? 'bg-indigo-600 text-white border-indigo-600'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
@@ -55,7 +54,7 @@
       </div>
       <p class="text-sm text-gray-500">タグをクリックして在庫を絞り込みできます（複数選択可）</p>
 
-      {{-- ✨ 右クリックメニュー（共通） --}}
+      {{-- ✨ 右クリックメニュー --}}
       <div
         x-show="contextMenu.show"
         x-transition
@@ -64,12 +63,10 @@
         :style="`top:${contextMenu.y}px;left:${contextMenu.x}px`"
       >
         <div class="py-1">
-          <button
-            class="block w-full text-left px-4 py-2 hover:bg-gray-100"
-            @click="openEditTag()">タグを編集</button>
-          <button
-            class="block w-full text-left px-4 py-2 hover:bg-red-50 text-red-600"
-            @click="confirmDeleteTag()">削除</button>
+          <button class="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  @click="openEditTag()">タグを編集</button>
+          <button class="block w-full text-left px-4 py-2 hover:bg-red-50 text-red-600"
+                  @click="confirmDeleteTag()">削除</button>
         </div>
       </div>
     </div>
@@ -81,24 +78,30 @@
       </template>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <template x-for="item in filteredItems" :key="item.id">
-          <div class="p-4 bg-white rounded-lg shadow">
+        <template x-for="item in filteredItems" :key="item.fade_key">
+          <div
+            x-transition:enter="transition ease-out duration-500"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-400"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="p-4 bg-white rounded-lg shadow">
+            
             <p class="text-lg font-semibold mb-2" x-text="item.item"></p>
 
-            {{-- 🏷 タグ表示＋右クリック対応 --}}
+            {{-- 🏷 タグ表示 --}}
             <div class="flex flex-wrap gap-1 mb-2">
               <template x-for="t in item.tags" :key="t.id">
-                <span
-                  class="px-2 py-1 text-xs bg-gray-100 border rounded-full cursor-pointer hover:bg-gray-200"
-                  x-text="t.name"
-                  @contextmenu.prevent="openTagContextMenu($event, t, item.id)"  {{-- ✅ item_idも渡す --}}
-                ></span>
+                <span class="px-2 py-1 text-xs bg-gray-100 border rounded-full cursor-pointer hover:bg-gray-200"
+                      x-text="t.name"
+                      @contextmenu.prevent="openTagContextMenu($event, t, item.id)">
+                </span>
               </template>
 
-              {{-- ➕ 商品別タグ追加ボタン --}}
-              <button
-                class="px-2 py-1 text-xs bg-indigo-500 text-white rounded-full hover:bg-indigo-600"
-                @click="openItemTagModal(item.id)">
+              {{-- ➕ 商品別タグ追加 --}}
+              <button class="px-2 py-1 text-xs bg-indigo-500 text-white rounded-full hover:bg-indigo-600"
+                      @click="openItemTagModal(item.id)">
                 ＋
               </button>
             </div>
@@ -106,14 +109,10 @@
             <p class="text-gray-800 text-base mt-2">
               賞味期限：
               <template x-if="item.expiration_date">
-                <span
-                  x-text="formatExpiration(item.expiration_date)"
-                  :class="isExpired(item.expiration_date) ? 'text-[#EE2E48] font-bold' : ''">
-                </span>
+                <span x-text="formatExpiration(item.expiration_date)"
+                      :class="isExpired(item.expiration_date) ? 'text-[#EE2E48] font-bold' : ''"></span>
               </template>
-              <template x-if="!item.expiration_date">
-                <span>なし</span>
-              </template>
+              <template x-if="!item.expiration_date"><span>なし</span></template>
             </p>
 
             <p class="text-gray-800 text-base">個数：<span x-text="item.quantity"></span></p>
@@ -155,7 +154,7 @@
         <input type="text"
           x-model="itemTagModal.name"
           class="w-full border rounded px-3 py-2"
-          placeholder="例）冷凍・おすすめなど">
+          placeholder="例）冷凍">
 
         <div class="mt-4 flex justify-end gap-2">
           <button type="button" class="px-3 py-2" @click="itemTagModal.show=false">キャンセル</button>
@@ -199,7 +198,7 @@
           headers: { 'Accept': 'application/json' }
         });
         this.items = await res.json();
-        this.filteredItems = this.items;
+        this.filteredItems = this.items.map(i => ({ ...i, fade_key: Math.random() }));
       },
 
       toggleTagFilter(tagId) {
@@ -213,13 +212,21 @@
 
       applyFilter() {
         if (this.selectedTags.length === 0) {
-          this.filteredItems = this.items;
+          this.filteredItems = this.items.map(i => ({ ...i, fade_key: Math.random() }));
           return;
         }
-        this.filteredItems = this.items.filter(item =>
-          item.tags.some(tag => this.selectedTags.includes(tag.id))
+
+        // タグIDを数値に正規化
+        const selected = this.selectedTags.map(Number);
+
+        const filtered = this.items.filter(item =>
+          item.tags.some(tag => selected.includes(Number(tag.id)))
         );
+
+        // アニメーションのためフェードキー更新
+        this.filteredItems = filtered.map(i => ({ ...i, fade_key: Math.random() }));
       },
+
 
       openCreateModal() {
         this.newTagName = '';
@@ -289,7 +296,6 @@
         }
       },
 
-      // 🔽 商品別タグ追加処理
       openItemTagModal(id) {
         this.itemTagModal = { show: true, itemId: id, name: '', error: '' };
       },
@@ -314,7 +320,7 @@
 
         if (res.ok) {
           this.itemTagModal.show = false;
-          await this.fetchItems(); // 更新反映
+          await this.fetchItems();
         } else {
           this.itemTagModal.error = '追加に失敗しました';
         }
@@ -341,5 +347,4 @@
   @endpush
 </x-app-layout>
 
-{{-- ✅ スクリプト読み込み --}}
 @stack('scripts')

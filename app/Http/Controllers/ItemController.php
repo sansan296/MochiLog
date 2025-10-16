@@ -7,17 +7,28 @@ use App\Models\Item;
 
 class ItemController extends Controller
 {
+    /**
+     * 在庫一覧ページ
+     * - JSONリクエスト時：Alpine.jsが使用（tags付きで全件返す）
+     * - 通常リクエスト時：Bladeでページ表示
+     */
     public function index(Request $request)
     {
-        // JSONリクエストの場合（Alpine.js が fetch で呼ぶ）
+        // ✅ JSONリクエスト（Alpine.js 側からの fetch）
         if ($request->boolean('json')) {
             $items = Item::with(['tags', 'user'])
                 ->orderBy('id', 'desc')
-                ->get();
+                ->get()
+                ->map(function ($item) {
+                    // ✅ アニメーション用の一意キー
+                    $item->fade_key = uniqid('fade_');
+                    return $item;
+                });
+
             return response()->json($items);
         }
 
-        // 通常のページ表示（従来の Blade）
+        // ✅ 通常HTML表示（Blade）
         $items = Item::with(['tags', 'user'])
             ->orderBy('id', 'desc')
             ->paginate(12);
@@ -27,13 +38,17 @@ class ItemController extends Controller
         return view('items.index', compact('items', 'totalQuantity'));
     }
 
+    /**
+     * 在庫登録フォーム表示
+     */
     public function create()
     {
-        // 登録用フォームを表示
         return view('items.create');
     }
 
-
+    /**
+     * 在庫登録処理
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -48,7 +63,7 @@ class ItemController extends Controller
         $item->item = $validated['item'];
         $item->quantity = $validated['quantity'];
 
-        // 賞味期限が指定されていた場合
+        // ✅ 賞味期限を組み立て
         if ($request->filled(['expiration_year', 'expiration_month', 'expiration_day'])) {
             $item->expiration_date = sprintf(
                 '%04d-%02d-%02d',
@@ -65,17 +80,22 @@ class ItemController extends Controller
             ->with('success', '在庫を追加しました。');
     }
 
+    /**
+     * 詳細ページ
+     */
     public function show($id)
     {
-        $item = \App\Models\Item::with(['user', 'memos', 'tags'])->findOrFail($id);
+        $item = Item::with(['user', 'memos', 'tags'])->findOrFail($id);
         return view('items.show', compact('item'));
     }
 
+    /**
+     * 編集ページ
+     */
     public function edit($id)
     {
-        $item = \App\Models\Item::with(['tags'])->findOrFail($id);
+        $item = Item::with(['tags'])->findOrFail($id);
 
-        // 賞味期限を分解（年・月・日をフォーム初期値に）
         $expiration = ['year' => null, 'month' => null, 'day' => null];
         if ($item->expiration_date) {
             $expiration['year'] = $item->expiration_date->format('Y');
@@ -85,5 +105,4 @@ class ItemController extends Controller
 
         return view('items.edit', compact('item', 'expiration'));
     }
-
 }
