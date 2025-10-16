@@ -8,6 +8,7 @@ use App\Http\Controllers\{
     MemoController,
     ItemController,
     RecipeController,
+    RecipeBookmarkController,
     PurchaseListController,
     DashboardController,
     AdminController,
@@ -56,9 +57,24 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/company', [DashboardController::class, 'company'])->name('dashboard.company');
 
     // -------------------------------
-    // 🍳 レシピ
+    // 🍳 レシピ関連 (Spoonacular API)
     // -------------------------------
+    // レシピ一覧（在庫から作れる料理一覧を表示）
     Route::get('/recipes', [RecipeController::class, 'index'])->name('recipes.index');
+
+    // 詳細ページ（特定のレシピ詳細）
+    Route::get('/recipes/{id}', [RecipeController::class, 'show'])
+        ->whereNumber('id')
+        ->name('recipes.show');
+
+    // -------------------------------
+    // ⭐ ブックマーク機能（APIのレシピを保存）
+    // -------------------------------
+    Route::get('/bookmarks', [RecipeBookmarkController::class, 'index'])->name('bookmarks.index');
+    Route::post('/bookmarks', [RecipeBookmarkController::class, 'store'])->name('bookmarks.store');
+    Route::delete('/bookmarks/{id}', [RecipeBookmarkController::class, 'destroy'])
+        ->whereNumber('id')
+        ->name('bookmarks.destroy');
 
     // -------------------------------
     // 📦 在庫（Item）・メモ（Memo）
@@ -71,7 +87,7 @@ Route::middleware('auth')->group(function () {
     // -------------------------------
     Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
     Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
-    Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update');  // ←★ 編集機能 追加
+    Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update');
     Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
 
     // アイテムごとのタグ操作
