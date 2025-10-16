@@ -44,7 +44,7 @@
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
             x-text="tag.name"
             @click="toggleTagFilter(tag.id)"
-            @contextmenu.prevent="openTagContextMenu($event, tag)"  {{-- 右クリックメニュー --}}
+            @contextmenu.prevent="openTagContextMenu($event, tag)"
           ></button>
         </template>
 
@@ -55,7 +55,7 @@
       </div>
       <p class="text-sm text-gray-500">タグをクリックして在庫を絞り込みできます（複数選択可）</p>
 
-      {{-- ✨ 右クリックメニュー --}}
+      {{-- ✨ 右クリックメニュー（共通） --}}
       <div
         x-show="contextMenu.show"
         x-transition
@@ -85,11 +85,16 @@
           <div class="p-4 bg-white rounded-lg shadow">
             <p class="text-lg font-semibold mb-2" x-text="item.item"></p>
 
-            {{-- 🏷 タグ表示 + 追加ボタン --}}
+            {{-- 🏷 タグ表示＋右クリック対応 --}}
             <div class="flex flex-wrap gap-1 mb-2">
               <template x-for="t in item.tags" :key="t.id">
-                <span class="px-2 py-1 text-xs bg-gray-100 border rounded-full" x-text="t.name"></span>
+                <span
+                  class="px-2 py-1 text-xs bg-gray-100 border rounded-full cursor-pointer hover:bg-gray-200"
+                  x-text="t.name"
+                  @contextmenu.prevent="openTagContextMenu($event, t, item.id)"  {{-- ✅ item_idも渡す --}}
+                ></span>
               </template>
+
               {{-- ➕ 商品別タグ追加ボタン --}}
               <button
                 class="px-2 py-1 text-xs bg-indigo-500 text-white rounded-full hover:bg-indigo-600"
@@ -176,7 +181,7 @@
       createModal: false,
       newTagName: '',
       error: '',
-      contextMenu: { show: false, x: 0, y: 0, target: null },
+      contextMenu: { show: false, x: 0, y: 0, target: null, itemId: null },
       itemTagModal: { show: false, itemId: null, name: '', error: '' },
 
       async init() {
@@ -239,9 +244,9 @@
         }
       },
 
-      openTagContextMenu(ev, tag) {
+      openTagContextMenu(ev, tag, itemId = null) {
         ev.preventDefault();
-        this.contextMenu = { show: true, x: ev.pageX, y: ev.pageY, target: tag };
+        this.contextMenu = { show: true, x: ev.pageX, y: ev.pageY, target: tag, itemId: itemId };
       },
 
       async openEditTag() {
@@ -251,7 +256,7 @@
           this.contextMenu.show = false;
           return;
         }
-        await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
+        const res = await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -260,18 +265,28 @@
           body: JSON.stringify({ name: newName.trim() }),
         });
         this.contextMenu.show = false;
-        await this.fetchTags();
+        if (res.ok) {
+          await this.fetchTags();
+          await this.fetchItems();
+        } else {
+          alert('タグの編集に失敗しました');
+        }
       },
 
       async confirmDeleteTag() {
         if (!this.contextMenu.target) return;
         if (!confirm(`「${this.contextMenu.target.name}」を削除しますか？`)) return;
-        await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
+        const res = await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
           method: 'DELETE',
           headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         });
         this.contextMenu.show = false;
-        await this.fetchTags();
+        if (res.ok) {
+          await this.fetchTags();
+          await this.fetchItems();
+        } else {
+          alert('タグの削除に失敗しました');
+        }
       },
 
       // 🔽 商品別タグ追加処理
