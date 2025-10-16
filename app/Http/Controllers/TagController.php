@@ -14,7 +14,6 @@ class TagController extends Controller
 
     public function store(Request $request)
     {
-        // JSON対応
         $data = $request->json()->all();
 
         $validated = validator($data, [
@@ -22,13 +21,16 @@ class TagController extends Controller
             'item_id' => 'nullable|exists:items,id',
         ])->validate();
 
-        $tag = Tag::create([
-            'name' => $validated['name'],
-            'item_id' => $validated['item_id'] ?? null,
-        ]);
+        // ① タグを重複チェック付きで取得または作成
+        $tag = \App\Models\Tag::firstOrCreate(['name' => $validated['name']]);
 
-        // フロントがfetchで受け取るのでJSON返却
-        return response()->json($tag, 201);
+        // ② item_id が指定されている場合は中間テーブルに関連付け
+        if (!empty($validated['item_id'])) {
+            $item = \App\Models\Item::find($validated['item_id']);
+            $item->tags()->syncWithoutDetaching([$tag->id]);
+        }
+
+        return response()->json(['success' => true, 'tag' => $tag]);
     }
 
 
