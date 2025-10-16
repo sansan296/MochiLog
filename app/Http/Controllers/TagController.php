@@ -13,7 +13,8 @@ class TagController extends Controller
      */
     public function index()
     {
-        return response()->json(Tag::orderBy('id')->get());
+          // item_id が null（全体タグ）のみ取得
+        return response()->json(Tag::whereNull('item_id')->orderBy('id')->get());
     }
 
     /**
@@ -21,26 +22,23 @@ class TagController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->json()->all();
-
-        $validated = validator($data, [
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'item_id' => 'nullable|exists:items,id',
-        ])->validate();
+        ]);
 
-        // タグ名が重複しても作成可能に変更
-        $tag = Tag::create(['name' => $validated['name']]);
+        $tag = Tag::create([
+            'name' => $validated['name'],
+            'item_id' => $validated['item_id'] ?? null,
+        ]);
 
-        // 商品との関連付け（item_tag テーブル）
-        if (!empty($validated['item_id'])) {
-            $item = Item::find($validated['item_id']);
-            if ($item) {
-                $item->tags()->syncWithoutDetaching([$tag->id]);
-            }
-        }
-
-        return response()->json(['success' => true, 'tag' => $tag]);
+        return response()->json([
+            'success' => true,
+            'tag' => $tag,
+        ]);
     }
+
+
 
     /**
      * タグ名を更新（重複名も許可）
