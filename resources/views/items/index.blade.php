@@ -11,24 +11,91 @@
        x-data="tagFilter()"
        x-init="init()">
 
-    {{-- 🔍 検索フォーム --}}
-    <form method="GET" action="{{ route('items.index') }}" class="mb-6 flex justify-between items-center">
-      <div>
-        <input type="text" name="keyword" value="{{ request('keyword') }}"
-              placeholder="商品名"
-              class="border rounded-lg px-3 py-2 w-64">
-        <button type="submit"
-                class="ml-2 px-4 py-2 bg-[#4973B5] text-white rounded-lg hover:bg-[#2C5BA5]">
-         検索
-        </button>
-      </div>
+    {{-- 🔍 検索フォーム（視覚整理版） --}}
+<form method="GET" action="{{ route('items.index') }}" class="mb-6 bg-white shadow-sm rounded-lg p-6 space-y-4">
 
-      {{-- 🍳 在庫で作れる料理を表示ボタン --}}
-      <a href="{{ route('recipes.index') }}" 
-         class="px-6 py-2 bg-[#FF9A3C] text-white font-semibold rounded-lg hover:bg-[#4973B5] transition">
-         在庫で作れる料理を表示
+  {{-- 商品名 --}}
+  <div>
+    <label class="block text-sm font-semibold text-gray-800 mb-1">商品名</label>
+    <input type="text" name="keyword" value="{{ request('keyword') }}"
+      placeholder="例: 牛乳"
+      class="border rounded-lg px-3 py-2 w-full">
+  </div>
+
+  {{-- 在庫数 --}}
+  <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+    <h3 class="text-sm font-semibold text-gray-700 mb-2">📦 在庫数</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs text-gray-600">最小数（以上）</label>
+        <input type="number" name="stock_min" value="{{ request('stock_min') }}"
+          placeholder="0"
+          class="border rounded-lg px-3 py-2 w-full">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600">最大数（以下）</label>
+        <input type="number" name="stock_max" value="{{ request('stock_max') }}"
+          placeholder="100"
+          class="border rounded-lg px-3 py-2 w-full">
+      </div>
+    </div>
+  </div>
+
+  {{-- 更新日 --}}
+  <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+    <h3 class="text-sm font-semibold text-gray-700 mb-2">🗓️ 更新日</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs text-gray-600">開始日（以降）</label>
+        <input type="date" name="updated_from" value="{{ request('updated_from') }}"
+          class="border rounded-lg px-3 py-2 w-full">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600">終了日（以前）</label>
+        <input type="date" name="updated_to" value="{{ request('updated_to') }}"
+          class="border rounded-lg px-3 py-2 w-full">
+      </div>
+    </div>
+  </div>
+
+  {{-- 賞味期限 --}}
+  <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+    <h3 class="text-sm font-semibold text-gray-700 mb-2">⏰ 賞味期限</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs text-gray-600">開始日（以降）</label>
+        <input type="date" name="expiration_from" value="{{ request('expiration_from') }}"
+          class="border rounded-lg px-3 py-2 w-full">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600">終了日（以前）</label>
+        <input type="date" name="expiration_to" value="{{ request('expiration_to') }}"
+          class="border rounded-lg px-3 py-2 w-full">
+      </div>
+    </div>
+  </div>
+
+  {{-- ボタン --}}
+  <div class="flex justify-between items-center mt-4">
+    <div class="flex gap-2">
+      <button type="submit"
+        class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        検索
+      </button>
+      <a href="{{ route('items.index') }}"
+        class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition">
+        リセット
       </a>
-    </form>
+    </div>
+
+    {{-- 🍳 在庫で作れる料理を表示 --}}
+    <a href="{{ route('recipes.index') }}" 
+       class="px-6 py-2 bg-[#FF9A3C] text-white font-semibold rounded-lg hover:bg-[#4973B5] transition">
+       在庫で作れる料理を表示
+    </a>
+  </div>
+</form>
+
 
     {{-- 🏷 タグ追加・絞り込み --}}
     <div class="mb-8 bg-white shadow-sm rounded-lg p-4 relative">
@@ -194,9 +261,16 @@
       },
 
       async fetchItems() {
-        const res = await fetch(`{{ route('items.index') }}?json=1`, {
-          headers: { 'Accept': 'application/json' }
-        });
+        const url = new URL(`{{ route('items.index') }}`);
+        url.searchParams.set('json', '1');
+        // 検索条件の保持
+        @foreach (['keyword','stock_min','stock_max','updated_from','updated_to','expiration_from','expiration_to'] as $param)
+          @if (request($param))
+            url.searchParams.set('{{ $param }}', '{{ request($param) }}');
+          @endif
+        @endforeach
+
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
         this.items = await res.json();
         this.filteredItems = this.items.map(i => ({ ...i, fade_key: Math.random() }));
       },
@@ -215,18 +289,12 @@
           this.filteredItems = this.items.map(i => ({ ...i, fade_key: Math.random() }));
           return;
         }
-
-        // タグIDを数値に正規化
         const selected = this.selectedTags.map(Number);
-
         const filtered = this.items.filter(item =>
           item.tags.some(tag => selected.includes(Number(tag.id)))
         );
-
-        // アニメーションのためフェードキー更新
         this.filteredItems = filtered.map(i => ({ ...i, fade_key: Math.random() }));
       },
-
 
       openCreateModal() {
         this.newTagName = '';

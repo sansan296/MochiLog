@@ -9,30 +9,58 @@ class ItemController extends Controller
 {
     /**
      * 在庫一覧ページ
-     * - JSONリクエスト時：Alpine.jsが使用（tags付きで全件返す）
+     * - JSONリクエスト時：Alpine.jsが使用（tags付きで返す）
      * - 通常リクエスト時：Bladeでページ表示
      */
     public function index(Request $request)
     {
-        // ✅ JSONリクエスト（Alpine.js 側からの fetch）
+        // ✅ 検索条件を適用
+        $query = Item::with(['tags', 'user']);
+
+        // 商品名検索
+        if ($request->filled('keyword')) {
+            $query->where('item', 'like', '%' . $request->keyword . '%');
+        }
+
+        // 在庫数フィルタ（範囲）
+        if ($request->filled('stock_min')) {
+            $query->where('quantity', '>=', (int)$request->stock_min);
+        }
+        if ($request->filled('stock_max')) {
+            $query->where('quantity', '<=', (int)$request->stock_max);
+        }
+
+        // 更新日フィルタ
+        if ($request->filled('updated_from')) {
+            $query->whereDate('updated_at', '>=', $request->updated_from);
+        }
+        if ($request->filled('updated_to')) {
+            $query->whereDate('updated_at', '<=', $request->updated_to);
+        }
+
+        // 賞味期限フィルタ
+        if ($request->filled('expiration_from')) {
+            $query->whereDate('expiration_date', '>=', $request->expiration_from);
+        }
+        if ($request->filled('expiration_to')) {
+            $query->whereDate('expiration_date', '<=', $request->expiration_to);
+        }
+
+        // 並び順（更新日が新しい順）
+        $query->orderBy('updated_at', 'desc');
+
+        // ✅ JSONリクエスト（Alpine.js用）
         if ($request->boolean('json')) {
-            $items = Item::with(['tags', 'user'])
-                ->orderBy('id', 'desc')
-                ->get()
-                ->map(function ($item) {
-                    // ✅ アニメーション用の一意キー
-                    $item->fade_key = uniqid('fade_');
-                    return $item;
-                });
+            $items = $query->get()->map(function ($item) {
+                $item->fade_key = uniqid('fade_'); // アニメーション用の一意キー
+                return $item;
+            });
 
             return response()->json($items);
         }
 
         // ✅ 通常HTML表示（Blade）
-        $items = Item::with(['tags', 'user'])
-            ->orderBy('id', 'desc')
-            ->paginate(12);
-
+        $items = $query->paginate(12);
         $totalQuantity = $items->sum('quantity');
 
         return view('items.index', compact('items', 'totalQuantity'));
