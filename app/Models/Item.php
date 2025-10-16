@@ -31,7 +31,7 @@ class Item extends Model
      * Cast設定（必要なら）
      */
     protected $casts = [
-        'quantity' => 'integer',
+        'expiration_date' => 'date',
     ];
 
     /**
