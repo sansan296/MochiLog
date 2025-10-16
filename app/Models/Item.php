@@ -43,26 +43,20 @@ class Item extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * タグとのリレーション
-     * 1つの商品は複数のタグを持つ
-     */
+
     public function tags()
     {
-        return $this->hasMany(Tag::class);
+        return $this->belongsToMany(Tag::class, 'item_tag')->withTimestamps();
     }
 
-    /**
-     * メモとのリレーション（存在する場合）
-     * 1つの商品に複数のメモが紐付く
-     */
+
     public function memos()
     {
         return $this->hasMany(Memo::class);
     }
 
     /**
-     * 賞味期限をフォーマットして返すアクセサ
+     * 賞味期限をフォーマットして返す
      * 例: 2025-10-16 → 2025/10/16
      */
     public function getFormattedExpirationDateAttribute()
