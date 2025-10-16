@@ -8,11 +8,17 @@ use App\Models\Item;
 
 class TagController extends Controller
 {
+    /**
+     * タグ一覧をJSONで返す
+     */
     public function index()
     {
         return response()->json(Tag::orderBy('id')->get());
     }
 
+    /**
+     * タグを作成または商品に紐付け
+     */
     public function store(Request $request)
     {
         $data = $request->json()->all();
@@ -22,10 +28,10 @@ class TagController extends Controller
             'item_id' => 'nullable|exists:items,id',
         ])->validate();
 
-        // タグ作成または既存取得
-        $tag = Tag::firstOrCreate(['name' => $validated['name']]);
+        // タグ名が重複しても作成可能に変更
+        $tag = Tag::create(['name' => $validated['name']]);
 
-        // 商品への紐付け
+        // 商品との関連付け（item_tag テーブル）
         if (!empty($validated['item_id'])) {
             $item = Item::find($validated['item_id']);
             if ($item) {
@@ -36,14 +42,16 @@ class TagController extends Controller
         return response()->json(['success' => true, 'tag' => $tag]);
     }
 
-    // ✅ 修正版 update（JSON対応・重複対応・例外処理付き）
+    /**
+     * タグ名を更新（重複名も許可）
+     */
     public function update(Request $request, $id)
     {
         try {
             $data = $request->json()->all();
 
             $validated = validator($data, [
-                'name' => 'required|string|max:255|unique:tags,name,' . $id,
+                'name' => 'required|string|max:255', // ← unique制約を削除
             ])->validate();
 
             $tag = Tag::findOrFail($id);
@@ -54,11 +62,14 @@ class TagController extends Controller
             \Log::error('Tag update failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
+    /**
+     * タグ削除
+     */
     public function destroy(Tag $tag)
     {
         $tag->delete();
