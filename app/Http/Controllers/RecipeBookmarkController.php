@@ -5,38 +5,25 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\RecipeBookmark;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 
 class RecipeBookmarkController extends Controller
 {
     /**
-     * コンストラクタ：ログインユーザーのみアクセス可能
-     */
-    public function __construct()
-    {
-        // ✅ 親のコンストラクタ呼び出しは不要！
-        $this->middleware('auth');
-    }
-
-    /**
-     * 🔖 ブックマーク一覧ページを表示
+     * ブックマーク一覧ページを表示
      */
     public function index()
     {
-        try {
-            $bookmarks = RecipeBookmark::where('user_id', Auth::id())
-                ->latest()
-                ->get();
+        $bookmarks = RecipeBookmark::where('user_id', Auth::id())
+            ->latest()
+            ->get();
 
-            return view('recipes.bookmarks', compact('bookmarks'));
-        } catch (\Exception $e) {
-            Log::error('ブックマーク一覧取得エラー: ' . $e->getMessage());
-            return back()->with('error', 'ブックマーク一覧の取得に失敗しました。');
-        }
+        return view('recipes.bookmarks', compact('bookmarks'));
     }
 
     /**
-     * ⭐ ブックマークを登録（重複時はスキップ）
+     * ブックマーク登録（DeepLでタイトルを翻訳）
      */
     public function store(Request $request)
     {
@@ -46,43 +33,52 @@ class RecipeBookmarkController extends Controller
             'image_url' => 'nullable|string|max:255',
         ]);
 
-        try {
-            RecipeBookmark::firstOrCreate(
-                [
-                    'user_id' => Auth::id(),
-                    'recipe_id' => $validated['recipe_id'],
-                ],
-                [
-                    'title' => $validated['title'],
-                    'image_url' => $validated['image_url'] ?? null,
-                ]
-            );
+        // DeepL API設定
+        $deeplUrl = env('DEEPL_API_URL', 'https://api-free.deepl.com/v2/translate');
+        $deeplKey = env('DEEPL_API_KEY');
 
-            return back()->with('message', 'ブックマークに追加しました！');
-        } catch (\Exception $e) {
-            Log::error('ブックマーク登録エラー: ' . $e->getMessage());
-            return back()->with('error', 'ブックマークの登録に失敗しました。');
-        }
+        // 翻訳（キャッシュ付き）
+        $translatedTitle = Cache::remember('deepl_ja_' . md5($validated['title']), 86400, function () use ($validated, $deeplUrl, $deeplKey) {
+            try {
+                $res = Http::asForm()->post($deeplUrl, [
+                    'auth_key'    => $deeplKey,
+                    'text'        => $validated['title'],
+                    'target_lang' => 'JA',
+                ]);
+
+                $data = $res->json();
+                return $data['translations'][0]['text'] ?? $validated['title'];
+            } catch (\Throwable $e) {
+                logger('DeepL翻訳エラー（Bookmark登録）', ['msg' => $e->getMessage()]);
+                return $validated['title'];
+            }
+        });
+
+        // 登録または既存確認
+        RecipeBookmark::firstOrCreate(
+            [
+                'user_id' => Auth::id(),
+                'recipe_id' => $validated['recipe_id'],
+            ],
+            [
+                'title' => $validated['title'],
+                'translated_title' => $translatedTitle,
+                'image_url' => $validated['image_url'] ?? null,
+            ]
+        );
+
+        return back()->with('message', 'ブックマークに追加しました！');
     }
 
     /**
-     * ❌ ブックマークを削除
+     * ブックマーク削除
      */
     public function destroy($id)
     {
-        try {
-            $deleted = RecipeBookmark::where('user_id', Auth::id())
-                ->where('recipe_id', $id)
-                ->delete();
+        RecipeBookmark::where('user_id', Auth::id())
+            ->where('recipe_id', $id)
+            ->delete();
 
-            if ($deleted) {
-                return back()->with('message', 'ブックマークを削除しました。');
-            } else {
-                return back()->with('error', '該当するブックマークが見つかりませんでした。');
-            }
-        } catch (\Exception $e) {
-            Log::error('ブックマーク削除エラー: ' . $e->getMessage());
-            return back()->with('error', 'ブックマークの削除に失敗しました。');
-        }
+        return back()->with('message', 'ブックマークを削除しました。');
     }
 }
