@@ -51,7 +51,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
 
     // -------------------------------
-    // 🏠 ダッシュボード
+    // 🏠 ダッシュボード（家庭 / 企業）
     // -------------------------------
     Route::get('/dashboard/home', [DashboardController::class, 'home'])->name('dashboard.home');
     Route::get('/dashboard/company', [DashboardController::class, 'company'])->name('dashboard.company');
@@ -59,16 +59,15 @@ Route::middleware('auth')->group(function () {
     // -------------------------------
     // 🍳 レシピ関連 (Spoonacular API)
     // -------------------------------
-    // レシピ一覧（在庫から作れる料理一覧を表示）
+    // 作れる料理一覧
     Route::get('/recipes', [RecipeController::class, 'index'])->name('recipes.index');
-
-    // 詳細ページ（特定のレシピ詳細）
+    // レシピ詳細（必要に応じて）
     Route::get('/recipes/{id}', [RecipeController::class, 'show'])
         ->whereNumber('id')
         ->name('recipes.show');
 
     // -------------------------------
-    // ⭐ ブックマーク機能（APIのレシピを保存）
+    // 🔖 ブックマーク機能（APIのレシピを保存）
     // -------------------------------
     Route::get('/bookmarks', [RecipeBookmarkController::class, 'index'])->name('bookmarks.index');
     Route::post('/bookmarks', [RecipeBookmarkController::class, 'store'])->name('bookmarks.store');
