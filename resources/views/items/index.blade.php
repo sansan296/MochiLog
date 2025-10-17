@@ -115,12 +115,16 @@
           </div>
 
             <a href="{{ route('recipes.index') }}" 
-              class="relative px-6 py-2 text-white text-sm font-semibold rounded-lg shadow-md 
-                      bg-gradient-to-r from-[#FFB347] to-[#FF9A3C]
+              class="relative px-6 py-2 text-white text-sm font-semibold rounded-xl 
+                    bg-gradient-to-r from-[#FFB347] to-[#FF9A3C]
                       hover:from-[#4973B5] hover:to-[#335C9E]
-                      transition-all duration-300 transform hover:scale-[1.03]">
-               在庫で作れる料理を表示
+                      backdrop-blur-md border border-white/30 shadow-lg
+                      ring-2 ring-[#ffffff40] hover:ring-[#4973B5]/40
+                      hover:shadow-[0_6px_18px_rgba(73,115,181,0.4)]
+                        transition-all duration-300 transform hover:-translate-y-0.5 hover:scale-[1.04]">
+                在庫で作れる料理を表示
             </a>
+
 
         </div>
       </form>

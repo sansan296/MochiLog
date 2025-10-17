@@ -133,4 +133,13 @@ class ItemController extends Controller
 
         return view('items.edit', compact('item', 'expiration'));
     }
+
+    public function destroy($id)
+    {
+        $item = Item::findOrFail($id);
+        $item->delete();
+
+        return redirect()->route('items.index')->with('success', '在庫を削除しました。');
+    }
+
 }
