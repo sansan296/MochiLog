@@ -1,38 +1,96 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" x-bind:class="{ 'dark': darkMode }">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="icon" href="{{ asset('images/ielog-icon.svg') }}" type="image/svg">
+    <link rel="icon" href="{{ asset('images/ielog-icon.svg') }}" type="image/svg+xml">
     <title>{{ config('app.name', 'IeLog') }}</title>
 
-    <!-- Fonts -->
+    <!-- 🖋 フォント -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Scripts -->
+    <!-- 🌀 Tailwind + Alpine + Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://unpkg.com/alpinejs" defer></script>
+
+    <!-- ✨ Lucide Icons（全ページ共通アイコン） -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => lucide.createIcons());
+    </script>
+
+    <!-- 💡 ダークモード保持 -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('theme', {
+                toggle() {
+                    this.dark = !this.dark;
+                    localStorage.setItem('darkMode', this.dark);
+                },
+                dark: localStorage.getItem('darkMode') === 'true'
+            });
+        });
+    </script>
 </head>
 
-<body class="font-sans antialiased">
-    <div class="min-h-screen bg-gray-100">
-        @include('layouts.navigation')
+<body class="font-sans antialiased bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <div class="min-h-screen flex flex-col">
+        
+        {{-- 🌐 ナビゲーションバー（上部固定） --}}
+        <nav class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <img src="{{ asset('images/ielog-icon.svg') }}" alt="IeLog Icon" class="w-8 h-8">
+                    <span class="text-xl font-bold text-brand-primary">IeLog</span>
+                </div>
 
-        <!-- Page Heading -->
+                <div class="flex items-center space-x-4">
+                    <!-- 🔁 ダークモード切替 -->
+                    <button 
+                        @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)" 
+                        class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                        <i x-show="!darkMode" data-lucide="moon" class="w-5 h-5 text-gray-600 dark:text-gray-300"></i>
+                        <i x-show="darkMode" data-lucide="sun" class="w-5 h-5 text-yellow-400"></i>
+                    </button>
+
+                    <!-- 🏠 メニューへのリンク -->
+                    <a href="{{ route('menu.index') }}" 
+                       class="flex items-center gap-1 px-3 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition">
+                        <i data-lucide="grid" class="w-5 h-5"></i>
+                        <span class="hidden sm:inline">メニュー</span>
+                    </a>
+
+                    <!-- 👤 プロフィール（右上アイコン） -->
+                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 hover:opacity-80">
+                        <i data-lucide="user-circle" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
+                        <span class="hidden sm:inline">プロフィール</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        {{-- 🧭 ページヘッダー（タイトルスロット） --}}
         @isset($header)
-            <header class="bg-white shadow">
+            <header class="bg-white dark:bg-gray-800 shadow">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                     {{ $header }}
                 </div>
             </header>
         @endisset
 
-        <!-- Page Content -->
-        <main class="min-h-screen bg-[#fdf4f4ff]">
+        {{-- 📄 ページコンテンツ --}}
+        <main class="flex-1 bg-[#fdf4f4ff] dark:bg-gray-900 transition-colors duration-300">
             {{ $slot }}
         </main>
+
+        {{-- 📌 フッター --}}
+        <footer class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            © {{ date('Y') }} IeLog.
+        </footer>
     </div>
 </body>
 </html>
