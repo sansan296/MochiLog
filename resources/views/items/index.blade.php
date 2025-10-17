@@ -1,106 +1,134 @@
 <x-app-layout>
   <x-slot name="header">
-    <h2 class="font-semibold text-2xl text-gray-800 leading-tight text-center">
+    <h2 class="font-semibold text-3xl text-gray-800 leading-tight text-center">
       {{ __('在庫一覧') }}
     </h2>
   </x-slot>
 
   <script src="https://unpkg.com/alpinejs" defer></script>
 
-  <div class="py-4 max-w-7xl mx-auto sm:px-6 lg:px-8"
+  <div class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8"
        x-data="tagFilter()"
        x-init="init()">
 
-    {{-- 🔍 検索フォーム（視覚整理版） --}}
-<form method="GET" action="{{ route('items.index') }}" class="mb-6 bg-white shadow-sm rounded-lg p-6 space-y-4">
-
-  {{-- 商品名 --}}
-  <div>
-    <label class="block text-sm font-semibold text-gray-800 mb-1">商品名</label>
-    <input type="text" name="keyword" value="{{ request('keyword') }}"
-      placeholder="例: 牛乳"
-      class="border rounded-lg px-3 py-2 w-full">
-  </div>
-
-  {{-- 在庫数 --}}
-  <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-    <h3 class="text-sm font-semibold text-gray-700 mb-2">📦 在庫数</h3>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-xs text-gray-600">最小数（以上）</label>
-        <input type="number" name="stock_min" value="{{ request('stock_min') }}"
-          placeholder="0"
-          class="border rounded-lg px-3 py-2 w-full">
-      </div>
-      <div>
-        <label class="block text-xs text-gray-600">最大数（以下）</label>
-        <input type="number" name="stock_max" value="{{ request('stock_max') }}"
-          placeholder="100"
-          class="border rounded-lg px-3 py-2 w-full">
-      </div>
-    </div>
-  </div>
-
-  {{-- 更新日 --}}
-  <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-    <h3 class="text-sm font-semibold text-gray-700 mb-2">🗓️ 更新日</h3>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-xs text-gray-600">開始日（以降）</label>
-        <input type="date" name="updated_from" value="{{ request('updated_from') }}"
-          class="border rounded-lg px-3 py-2 w-full">
-      </div>
-      <div>
-        <label class="block text-xs text-gray-600">終了日（以前）</label>
-        <input type="date" name="updated_to" value="{{ request('updated_to') }}"
-          class="border rounded-lg px-3 py-2 w-full">
-      </div>
-    </div>
-  </div>
-
-  {{-- 賞味期限 --}}
-  <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-    <h3 class="text-sm font-semibold text-gray-700 mb-2">⏰ 賞味期限</h3>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-xs text-gray-600">開始日（以降）</label>
-        <input type="date" name="expiration_from" value="{{ request('expiration_from') }}"
-          class="border rounded-lg px-3 py-2 w-full">
-      </div>
-      <div>
-        <label class="block text-xs text-gray-600">終了日（以前）</label>
-        <input type="date" name="expiration_to" value="{{ request('expiration_to') }}"
-          class="border rounded-lg px-3 py-2 w-full">
-      </div>
-    </div>
-  </div>
-
-  {{-- ボタン --}}
-  <div class="flex justify-between items-center mt-4">
-    <div class="flex gap-2">
-      <button type="submit"
-        class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-        検索
+    <!-- 🔍 検索フォーム（折りたたみ＋スライドアニメ付き） -->
+    <div class="mb-8">
+      <button 
+        @click="searchOpen = !searchOpen"
+        class="flex items-center justify-between w-full bg-white rounded-2xl shadow-md p-4 hover:shadow-lg transition-all duration-200">
+        <span class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          🔍 検索オプション
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+             stroke-width="2" stroke="currentColor"
+             class="w-6 h-6 text-gray-600 transform transition-transform duration-300"
+             :class="searchOpen ? 'rotate-180' : ''">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
-      <a href="{{ route('items.index') }}"
-        class="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition">
-        リセット
-      </a>
+
+      <!-- 検索フォーム本体 -->
+      <form 
+        x-show="searchOpen"
+        x-transition:enter="transition ease-out duration-400"
+        x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-300"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 -translate-y-4 scale-95"
+        method="GET" 
+        action="{{ route('items.index') }}" 
+        class="mt-4 bg-gradient-to-br from-blue-50 to-indigo-100 shadow-inner rounded-2xl p-6 space-y-6 border border-indigo-100">
+
+        {{-- 商品名 --}}
+        <div>
+          <label class="block text-sm font-semibold text-gray-800 mb-1">商品名</label>
+          <input type="text" name="keyword" value="{{ request('keyword') }}"
+            placeholder="例: 牛乳"
+            class="border rounded-lg px-3 py-2 w-full shadow-sm focus:ring focus:ring-blue-200">
+        </div>
+
+        {{-- 在庫数 --}}
+        <div class="border border-indigo-100 rounded-lg p-4 bg-white/70 shadow-sm">
+          <h3 class="text-sm font-semibold text-gray-800 mb-2">📦 在庫数</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-gray-600">最小数（以上）</label>
+              <input type="number" name="stock_min" value="{{ request('stock_min') }}"
+                placeholder="0"
+                class="border rounded-lg px-3 py-2 w-full focus:ring focus:ring-indigo-200">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-600">最大数（以下）</label>
+              <input type="number" name="stock_max" value="{{ request('stock_max') }}"
+                placeholder="100"
+                class="border rounded-lg px-3 py-2 w-full focus:ring focus:ring-indigo-200">
+            </div>
+          </div>
+        </div>
+
+        {{-- 更新日 --}}
+        <div class="border border-indigo-100 rounded-lg p-4 bg-white/70 shadow-sm">
+          <h3 class="text-sm font-semibold text-gray-800 mb-2">🗓️ 更新日</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-gray-600">開始日（以降）</label>
+              <input type="date" name="updated_from" value="{{ request('updated_from') }}"
+                class="border rounded-lg px-3 py-2 w-full focus:ring focus:ring-indigo-200">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-600">終了日（以前）</label>
+              <input type="date" name="updated_to" value="{{ request('updated_to') }}"
+                class="border rounded-lg px-3 py-2 w-full focus:ring focus:ring-indigo-200">
+            </div>
+          </div>
+        </div>
+
+        {{-- 賞味期限 --}}
+        <div class="border border-indigo-100 rounded-lg p-4 bg-white/70 shadow-sm">
+          <h3 class="text-sm font-semibold text-gray-800 mb-2">⏰ 賞味期限</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-gray-600">開始日（以降）</label>
+              <input type="date" name="expiration_from" value="{{ request('expiration_from') }}"
+                class="border rounded-lg px-3 py-2 w-full focus:ring focus:ring-indigo-200">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-600">終了日（以前）</label>
+              <input type="date" name="expiration_to" value="{{ request('expiration_to') }}"
+                class="border rounded-lg px-3 py-2 w-full focus:ring focus:ring-indigo-200">
+            </div>
+          </div>
+        </div>
+
+        {{-- ボタン --}}
+        <div class="flex justify-between items-center mt-6">
+          <div class="flex gap-3">
+            <button type="submit"
+              class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-md">
+              検索
+            </button>
+            <a href="{{ route('items.index') }}"
+              class="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition shadow-md">
+              リセット
+            </a>
+          </div>
+
+            <a href="{{ route('recipes.index') }}" 
+              class="relative px-6 py-2 text-white text-sm font-semibold rounded-lg shadow-md 
+                      bg-gradient-to-r from-[#FFB347] to-[#FF9A3C]
+                      hover:from-[#4973B5] hover:to-[#335C9E]
+                      transition-all duration-300 transform hover:scale-[1.03]">
+               在庫で作れる料理を表示
+            </a>
+
+        </div>
+      </form>
     </div>
 
-    {{-- 🍳 在庫で作れる料理を表示 --}}
-    <a href="{{ route('recipes.index') }}" 
-       class="px-6 py-2 bg-[#FF9A3C] text-white font-semibold rounded-lg hover:bg-[#4973B5] transition">
-       在庫で作れる料理を表示
-    </a>
-  </div>
-</form>
-
-
-    {{-- 🏷 タグ追加・絞り込み --}}
-    <div class="mb-8 bg-white shadow-sm rounded-lg p-4 relative">
+    <!-- 🏷 タグ絞り込み -->
+    <div class="mb-8 bg-white shadow-md rounded-2xl p-4">
       <div class="flex items-center flex-wrap gap-2 mb-3">
-        {{-- タグ一覧 --}}
         <template x-for="tag in tags" :key="tag.id">
           <button
             type="button"
@@ -110,36 +138,19 @@
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
             x-text="tag.name"
             @click="toggleTagFilter(tag.id)"
-            @contextmenu.prevent="openTagContextMenu($event, tag)"
-          ></button>
+            @contextmenu.prevent="openTagContextMenu($event, tag)">
+          </button>
         </template>
 
-        {{-- ＋ボタン（新規タグ追加） --}}
         <button type="button"
                 class="px-3 py-1 rounded-full border text-sm bg-indigo-600 text-white hover:bg-indigo-700"
                 @click="openCreateModal()">＋</button>
       </div>
       <p class="text-sm text-gray-500">タグをクリックして在庫を絞り込みできます（複数選択可）</p>
-
-      {{-- ✨ 右クリックメニュー --}}
-      <div
-        x-show="contextMenu.show"
-        x-transition
-        @click.outside="contextMenu.show=false"
-        class="fixed z-50 bg-white border shadow rounded-md text-sm"
-        :style="`top:${contextMenu.y}px;left:${contextMenu.x}px`"
-      >
-        <div class="py-1">
-          <button class="block w-full text-left px-4 py-2 hover:bg-gray-100"
-                  @click="openEditTag()">タグを編集</button>
-          <button class="block w-full text-left px-4 py-2 hover:bg-red-50 text-red-600"
-                  @click="confirmDeleteTag()">削除</button>
-        </div>
-      </div>
     </div>
 
-    {{-- 📦 在庫一覧 --}}
-    <div class="bg-[#9cbcf0ff] overflow-hidden shadow-sm sm:rounded-lg p-6">
+    <!-- 📦 在庫一覧 -->
+    <div class="bg-gradient-to-br from-indigo-100 to-blue-100 shadow-inner sm:rounded-2xl p-6">
       <template x-if="filteredItems.length === 0">
         <p class="text-center text-gray-600">該当する在庫がありません。</p>
       </template>
@@ -150,14 +161,11 @@
             x-transition:enter="transition ease-out duration-500"
             x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-400"
-            x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95"
-            class="p-4 bg-white rounded-lg shadow">
-            
-            <p class="text-lg font-semibold mb-2" x-text="item.item"></p>
+            class="p-6 bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300">
 
-            {{-- 🏷 タグ表示 --}}
+            <p class="text-xl font-semibold mb-2 text-gray-800" x-text="item.item"></p>
+
+            <!-- タグ表示 -->
             <div class="flex flex-wrap gap-1 mb-2">
               <template x-for="t in item.tags" :key="t.id">
                 <span class="px-2 py-1 text-xs bg-gray-100 border rounded-full cursor-pointer hover:bg-gray-200"
@@ -165,15 +173,13 @@
                       @contextmenu.prevent="openTagContextMenu($event, t, item.id)">
                 </span>
               </template>
-
-              {{-- ➕ 商品別タグ追加 --}}
               <button class="px-2 py-1 text-xs bg-indigo-500 text-white rounded-full hover:bg-indigo-600"
                       @click="openItemTagModal(item.id)">
                 ＋
               </button>
             </div>
 
-            <p class="text-gray-800 text-base mt-2">
+            <p class="text-gray-800 text-sm mt-2">
               賞味期限：
               <template x-if="item.expiration_date">
                 <span x-text="formatExpiration(item.expiration_date)"
@@ -182,8 +188,8 @@
               <template x-if="!item.expiration_date"><span>なし</span></template>
             </p>
 
-            <p class="text-gray-800 text-base">個数：<span x-text="item.quantity"></span></p>
-            <p class="text-gray-600 text-sm mb-2">登録者：<span x-text="item.user.name"></span></p>
+            <p class="text-gray-800 text-sm">個数：<span x-text="item.quantity"></span></p>
+            <p class="text-gray-600 text-xs mb-2">登録者：<span x-text="item.user.name"></span></p>
 
             <a :href="`/items/${item.id}`" 
                class="block text-right text-[#4973B5] hover:text-[#2C5BA5] font-medium mt-2">
@@ -193,46 +199,6 @@
         </template>
       </div>
     </div>
-
-    {{-- 🧾 タグ作成モーダル --}}
-    <div x-show="createModal"
-         x-transition
-         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div class="bg-white rounded-xl p-6 w-80">
-        <h3 class="font-semibold mb-3">新しいタグを追加</h3>
-        <input type="text" x-model="newTagName"
-          class="w-full border rounded px-3 py-2" placeholder="例）冷凍">
-        <div class="mt-4 flex justify-end gap-2">
-          <button type="button" class="px-3 py-2" @click="createModal=false">キャンセル</button>
-          <button type="button" class="px-3 py-2 bg-indigo-600 text-white rounded"
-            @click="createTag()">作成</button>
-        </div>
-        <p x-show="error" class="text-sm text-red-600 mt-2" x-text="error"></p>
-      </div>
-    </div>
-
-    {{-- 🏷 商品別タグ追加モーダル --}}
-    <div x-show="itemTagModal.show"
-         x-transition
-         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div class="bg-white rounded-xl p-6 w-80">
-        <h3 class="font-semibold mb-3">この商品にタグを追加</h3>
-
-        <input type="text"
-          x-model="itemTagModal.name"
-          class="w-full border rounded px-3 py-2"
-          placeholder="例）冷凍">
-
-        <div class="mt-4 flex justify-end gap-2">
-          <button type="button" class="px-3 py-2" @click="itemTagModal.show=false">キャンセル</button>
-          <button type="button" class="px-3 py-2 bg-indigo-600 text-white rounded"
-            @click="addTagToItem()">追加</button>
-        </div>
-
-        <p x-show="itemTagModal.error" class="text-sm text-red-600 mt-2" x-text="itemTagModal.error"></p>
-      </div>
-    </div>
-
   </div>
 
   {{-- ✅ Alpine.jsロジック --}}
@@ -240,6 +206,7 @@
   <script>
   function tagFilter() {
     return {
+      searchOpen: false, // 検索フォーム開閉状態
       tags: [],
       items: [],
       filteredItems: [],
@@ -263,13 +230,11 @@
       async fetchItems() {
         const url = new URL(`{{ route('items.index') }}`);
         url.searchParams.set('json', '1');
-        // 検索条件の保持
         @foreach (['keyword','stock_min','stock_max','updated_from','updated_to','expiration_from','expiration_to'] as $param)
           @if (request($param))
             url.searchParams.set('{{ $param }}', '{{ request($param) }}');
           @endif
         @endforeach
-
         const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
         this.items = await res.json();
         this.filteredItems = this.items.map(i => ({ ...i, fade_key: Math.random() }));
@@ -305,10 +270,7 @@
       async createTag() {
         const res = await fetch(`{{ route('tags.store') }}`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          },
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
           body: JSON.stringify({ name: this.newTagName.trim() }),
         });
         if (res.ok) {
@@ -333,10 +295,7 @@
         }
         const res = await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          },
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
           body: JSON.stringify({ name: newName.trim() }),
         });
         this.contextMenu.show = false;
@@ -376,14 +335,8 @@
         }
         const res = await fetch(`{{ route('tags.store') }}`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          },
-          body: JSON.stringify({
-            name: name,
-            item_id: this.itemTagModal.itemId,
-          }),
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+          body: JSON.stringify({ name: name, item_id: this.itemTagModal.itemId }),
         });
 
         if (res.ok) {
