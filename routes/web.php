@@ -50,40 +50,45 @@ Route::middleware('auth')->group(function () {
 // ====================================================================
 Route::middleware('auth')->group(function () {
 
-    // -------------------------------
+    // --------------------------------------------------------------
+    // 🧭 新メニュー画面（全ページ統合UI）
+    // --------------------------------------------------------------
+    Route::get('/menu', function () {
+        return view('menu.index');
+    })->name('menu.index');
+
+    // --------------------------------------------------------------
     // 🏠 ダッシュボード（家庭 / 企業）
-    // -------------------------------
+    // --------------------------------------------------------------
     Route::get('/dashboard/home', [DashboardController::class, 'home'])->name('dashboard.home');
     Route::get('/dashboard/company', [DashboardController::class, 'company'])->name('dashboard.company');
 
-    // -------------------------------
+    // --------------------------------------------------------------
     // 🍳 レシピ関連 (Spoonacular API)
-    // -------------------------------
-    // 作れる料理一覧
+    // --------------------------------------------------------------
     Route::get('/recipes', [RecipeController::class, 'index'])->name('recipes.index');
-    // レシピ詳細（必要に応じて）
     Route::get('/recipes/{id}', [RecipeController::class, 'show'])
         ->whereNumber('id')
         ->name('recipes.show');
 
-    // -------------------------------
-    // 🔖 ブックマーク機能（APIのレシピを保存）
-    // -------------------------------
+    // --------------------------------------------------------------
+    // 🔖 ブックマーク機能
+    // --------------------------------------------------------------
     Route::get('/bookmarks', [RecipeBookmarkController::class, 'index'])->name('bookmarks.index');
     Route::post('/bookmarks', [RecipeBookmarkController::class, 'store'])->name('bookmarks.store');
     Route::delete('/bookmarks/{id}', [RecipeBookmarkController::class, 'destroy'])
         ->whereNumber('id')
         ->name('bookmarks.destroy');
 
-    // -------------------------------
+    // --------------------------------------------------------------
     // 📦 在庫（Item）・メモ（Memo）
-    // -------------------------------
+    // --------------------------------------------------------------
     Route::resource('items', ItemController::class);
     Route::resource('items.memos', MemoController::class);
 
-    // -------------------------------
+    // --------------------------------------------------------------
     // 🏷 タグ関連
-    // -------------------------------
+    // --------------------------------------------------------------
     Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
     Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
     Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update');
@@ -93,25 +98,25 @@ Route::middleware('auth')->group(function () {
     Route::get('/items/{item}/tags', [ItemTagController::class, 'index'])->name('items.tags.index');
     Route::post('/items/{item}/tags/toggle', [ItemTagController::class, 'toggle'])->name('items.tags.toggle');
 
-    // -------------------------------
+    // --------------------------------------------------------------
     // 👤 プロフィール
-    // -------------------------------
+    // --------------------------------------------------------------
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // -------------------------------
+    // --------------------------------------------------------------
     // 🛒 購入リスト
-    // -------------------------------
+    // --------------------------------------------------------------
     Route::get('/purchase-lists', [PurchaseListController::class, 'index'])->name('purchase_lists.index');
     Route::post('/purchase-lists', [PurchaseListController::class, 'store'])->name('purchase_lists.store');
     Route::delete('/purchase-lists/{purchaseList}', [PurchaseListController::class, 'destroy'])
         ->whereNumber('purchaseList')
         ->name('purchase_lists.destroy');
 
-    // -------------------------------
+    // --------------------------------------------------------------
     // 📜 監査ログ
-    // -------------------------------
+    // --------------------------------------------------------------
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
     // 旧URL互換
@@ -124,15 +129,15 @@ Route::middleware('auth')->group(function () {
 // ====================================================================
 Route::prefix('admin')->name('admin.')->group(function () {
 
-    // -------------------------------
+    // --------------------------------------------------------------
     // 🔑 管理者ログイン
-    // -------------------------------
+    // --------------------------------------------------------------
     Route::get('/login', [AdminController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AdminController::class, 'login'])->name('login.submit');
 
-    // -------------------------------
+    // --------------------------------------------------------------
     // 🧭 管理者専用ページ
-    // -------------------------------
+    // --------------------------------------------------------------
     Route::middleware('auth:admin')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
