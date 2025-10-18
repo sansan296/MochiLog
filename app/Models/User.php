@@ -20,6 +20,9 @@ class User extends Authenticatable
         'company',
         'position',
         'occupation',
+        'notify_low_stock',
+        'notify_recipe_updates',
+        'notify_system',
     ];
 
     protected $hidden = [

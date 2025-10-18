@@ -9,6 +9,13 @@
 
   <div class="max-w-5xl mx-auto py-10 px-6 space-y-10">
 
+    {{-- ✅ 成功メッセージ --}}
+    @if (session('success'))
+      <div class="bg-green-100 text-green-800 px-4 py-3 rounded-xl shadow text-center">
+        {{ session('success') }}
+      </div>
+    @endif
+
     {{-- 🌙 テーマ設定 --}}
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-8 transition-all duration-300">
       <h3 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-2">
@@ -39,26 +46,51 @@
         通知設定
       </h3>
 
-      <form class="space-y-4">
+      <form method="POST" action="{{ route('settings.update') }}" class="space-y-4">
+        @csrf
+        @method('PATCH')
+
         <label class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer">
           <span class="text-gray-700 dark:text-gray-200">在庫が少なくなったら通知</span>
-          <input type="checkbox" class="w-5 h-5 accent-indigo-500" checked>
+          <input type="checkbox" name="notify_low_stock" class="w-5 h-5 accent-indigo-500" 
+            {{ $user->notify_low_stock ? 'checked' : '' }}>
         </label>
-        
+
 
         <label class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer">
           <span class="text-gray-700 dark:text-gray-200">システムメンテナンス情報</span>
-          <input type="checkbox" class="w-5 h-5 accent-indigo-500">
+          <input type="checkbox" name="notify_system" class="w-5 h-5 accent-indigo-500"
+            {{ $user->notify_system ? 'checked' : '' }}>
         </label>
 
         <div class="text-right pt-4">
-          <button type="button" class="px-5 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
+          <button type="submit" class="px-5 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
             保存
           </button>
         </div>
       </form>
     </div>
 
+    {{-- 🏠 モード設定 --}}
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-8 transition-all duration-300">
+      <h3 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+        <i data-lucide="home" class="w-6 h-6 text-indigo-500"></i>
+        モード設定
+      </h3>
+
+      <p class="text-gray-600 dark:text-gray-300 mb-4">家庭モード / 企業モードを切り替えます。</p>
+
+      <div class="flex gap-4">
+        <a href="{{ route('dashboard.home') }}" 
+           class="flex-1 text-center py-3 rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600 transition">
+           家庭モード
+        </a>
+        <a href="{{ route('dashboard.company') }}" 
+           class="flex-1 text-center py-3 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition">
+           企業モード
+        </a>
+      </div>
+    </div>
 
     {{-- 🧾 アカウント情報 --}}
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-8 transition-all duration-300">

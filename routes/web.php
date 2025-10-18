@@ -16,7 +16,7 @@ use App\Http\Controllers\{
     TagController,
     ItemTagController,
     InventoryCsvController,
-    SettingsController // ← 追加（設定ページ用）
+    SettingsController // ← 設定ページ用
 };
 
 /*
@@ -59,10 +59,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/menu', fn() => view('menu.index'))->name('menu.index');
 
     // --------------------------------------------------------------
-    // ⚙️ 設定ページ
+    // ⚙️ 設定ページ（表示・更新）
     // --------------------------------------------------------------
-    Route::get('/settings', [SettingsController::class, 'index'])
-        ->name('settings.index');
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
 
     // --------------------------------------------------------------
     // 🏠 ダッシュボード（家庭 / 企業）
