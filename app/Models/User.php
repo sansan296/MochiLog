@@ -23,6 +23,7 @@ class User extends Authenticatable
         'notify_low_stock',
         'notify_recipe_updates',
         'notify_system',
+        'low_stock_threshold',
     ];
 
     protected $hidden = [

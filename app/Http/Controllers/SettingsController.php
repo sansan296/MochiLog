@@ -17,19 +17,23 @@ class SettingsController extends Controller
     {
         $user = Auth::user();
 
+        // 🔸 リクエスト内容を確認するため一時ログ出力（デバッグ用）
+        \Log::info('Settings update request:', $request->all());
+
         $validated = $request->validate([
-            'notify_low_stock' => 'nullable|boolean',
-            'notify_recipe_updates' => 'nullable|boolean',
-            'notify_system' => 'nullable|boolean',
+            'low_stock_threshold' => 'required|integer|min:1|max:50',
         ]);
 
-        // チェックボックスがオフのときは null が送られるので false に変換
-        $user->update([
-            'notify_low_stock' => $request->has('notify_low_stock'),
-            'notify_recipe_updates' => $request->has('notify_recipe_updates'),
-            'notify_system' => $request->has('notify_system'),
-        ]);
+        // チェックボックスは未チェックだと値が送られないため boolean() で処理
+        $user->notify_low_stock = $request->boolean('notify_low_stock');
+        $user->notify_recipe_updates = $request->boolean('notify_recipe_updates');
+        $user->notify_system = $request->boolean('notify_system');
+        $user->low_stock_threshold = $validated['low_stock_threshold'];
+        $user->save();
 
-        return redirect()->route('settings.index')->with('success', '通知設定を保存しました。');
+        // DB保存後に最新状態で再表示
+        $user->refresh();
+
+        return redirect()->route('settings.index')->with('success', '設定を保存しました。');
     }
 }
