@@ -37,6 +37,16 @@
             <p class="text-base text-gray-500">登録されている在庫を確認・編集できます。</p>
           </a>
 
+          <!-- 在庫追加 -->
+          <a href="{{ route('items.create') }}" 
+             class="bg-white rounded-3xl shadow-md p-8 hover:shadow-2xl transition-all duration-300 flex flex-col gap-3">
+            <h3 class="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+              ➕ 在庫追加
+            </h3>
+            <p class="text-base text-gray-500">在庫を新規登録できます。</p>
+          </a>
+
+
           <!-- 購入リスト -->
           <a href="{{ route('purchase_lists.index') }}" 
              class="bg-white rounded-3xl shadow-md p-8 hover:shadow-2xl transition-all duration-300 flex flex-col gap-3">
@@ -71,15 +81,6 @@
               📜 監査ログ
             </h3>
             <p class="text-base text-gray-500">操作履歴を確認します。</p>
-          </a>
-
-          <!-- 📊 在庫CSV管理 -->
-          <a href="{{ route('items.csv.index') }}" 
-             class="bg-white rounded-3xl shadow-md p-8 hover:shadow-2xl transition-all duration-300 flex flex-col gap-3">
-            <h3 class="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-              📊 在庫CSV管理
-            </h3>
-            <p class="text-base text-gray-500">在庫データをCSVでエクスポート・インポートできます。</p>
           </a>
 
         </div>
