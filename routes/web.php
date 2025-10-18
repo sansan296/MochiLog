@@ -52,9 +52,13 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
 
     // --------------------------------------------------------------
-    // 🧭 新メニュー画面（全ページ統合UI）
+    // 🧭 メニュー画面（全ページ統合UI）
     // --------------------------------------------------------------
-    Route::get('/menu', fn() => view('menu.index'))->name('menu.index');
+    // resources/views/menu/index.blade.php を表示
+    Route::get('/menu', function () {
+        return view('menu.index'); // ファイルが menu/index.blade.php の場合
+        // return view('menu'); // ファイルが menu.blade.php の場合はこちら
+    })->name('menu.index');
 
     // --------------------------------------------------------------
     // 🏠 ダッシュボード（家庭 / 企業）
