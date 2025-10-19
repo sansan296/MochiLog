@@ -10,9 +10,13 @@ class ItemController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Item::with(['user', 'tags', 'memos' => function ($q) {
+        $query = Item::with([
+        'user',
+        'tags', // ✅ タグを常に読み込む！
+        'memos' => function ($q) {
             $q->latest()->with('user');
-        }]);
+        },
+    ]);
 
         // 🔍 商品名キーワード検索
         if ($request->filled('keyword')) {

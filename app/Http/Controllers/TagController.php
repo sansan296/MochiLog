@@ -34,10 +34,10 @@ class TagController extends Controller
             }
 
             $item->tags()->syncWithoutDetaching([$tag->id]);
-
             return response()->json(['success' => true, 'tag' => $tag]);
         }
 
+        // 全体タグの場合
         $tag = Tag::firstOrCreate([
             'name' => $validated['name'],
             'item_id' => null,
@@ -47,22 +47,18 @@ class TagController extends Controller
     }
 
     // タグ更新
-    public function update(Request $request, $id)
+    public function update(Request $request, Tag $tag)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
-        $tag = Tag::findOrFail($id);
-        $tag->update(['name' => $validated['name']]);
+        $validated = $request->validate(['name' => 'required|string|max:255']);
+        $tag->update($validated);
 
         return response()->json(['success' => true, 'tag' => $tag]);
     }
 
     // タグ削除
-    public function destroy($id)
+    public function destroy(Tag $tag)
     {
-        $tag = Tag::findOrFail($id);
+        // アイテムとの関連を解除
         $tag->items()->detach();
         $tag->delete();
 

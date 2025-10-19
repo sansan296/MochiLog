@@ -11,8 +11,9 @@ class Tag extends Model
 
     protected $fillable = ['name', 'item_id'];
 
-    public function items() {
-        return $this->belongsToMany(Item::class, 'item_tag');
+    public function items()
+    {
+        return $this->belongsToMany(Item::class, 'item_tag', 'tag_id', 'item_id')->withTimestamps();
     }
-
 }
+
