@@ -98,6 +98,26 @@
             <p class="text-base text-gray-500">在庫データをCSVでインポート・エクスポートできます。</p>
           </a>
 
+            <a href="{{ route('admin.dashboard') }}" 
+              class="bg-white rounded-3xl shadow-md p-8 hover:shadow-2xl border border-red-200 hover:border-red-400 transition-all duration-300 flex flex-col gap-3">
+              <h3 class="text-2xl font-semibold text-gray-800 flex items-center gap-2">🧑‍💼 管理者専用ページ</h3>
+              <p class="text-base text-gray-500">管理者用のダッシュボードへ移動します。</p>
+            </a>
+
+{{-- ⚙️ 管理者設定ページ（全ユーザー閲覧可） --}}
+<a href="{{ route('admin.settings.dashboard') }}" 
+   class="bg-white rounded-3xl shadow-md p-8 hover:shadow-2xl border border-purple-200 hover:border-purple-400 transition-all duration-300 flex flex-col gap-3">
+  <h3 class="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+    ⚙️ 管理者設定ページ
+  </h3>
+  <p class="text-base text-gray-500">
+    管理者設定ページ（Dashboard）を開きます。
+  </p>
+</a>
+
+
+
+
         </div> <!-- ✅ grid 終了 -->
       </div> <!-- ✅ max-w-6xl 終了 -->
     </main>

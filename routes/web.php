@@ -33,12 +33,11 @@ use App\Http\Controllers\{
 // ====================================================================
 Route::get('/', fn() => view('welcome'));
 
-// ====================================================================
-// 🌟 ログイン後：モード選択へリダイレクト
-// ====================================================================
-Route::get('/dashboard', fn() => redirect('/mode-select'))
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+// 🌟 ログイン後：モード選択ページへリダイレクト
+Route::get('/dashboard', function () {
+    return redirect()->route('mode.select'); // ← ここでモード選択へリダイレクト
+})->middleware(['auth', 'verified'])->name('dashboard');
+
 
 // ====================================================================
 // 🌟 家庭・企業のモード選択ページ
@@ -165,13 +164,32 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/login', [AdminController::class, 'login'])->name('login.submit');
 
     // --------------------------------------------------------------
-    // 🧭 管理者専用ページ
+    // 🧭 管理者専用ページ & 権限管理
     // --------------------------------------------------------------
-    Route::middleware('auth:admin')->group(function () {
+    Route::middleware(['auth', 'admin'])->group(function () {
+        // 🧭 管理者ダッシュボード
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-        Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
+
+        // 👑 管理者権限付与・解除
+        Route::post('/users/{user}/toggle-admin', [AdminController::class, 'toggleAdmin'])
+            ->name('users.toggle-admin');
+
+        // 全ユーザーがアクセスできる dashboard ページ
+    Route::get('/dashboard/view', function () {
+        return view('dashboard');
+    })->middleware(['auth'])->name('dashboard');
+
     });
-});
+}); 
+
+
+// 🌟 管理者設定ページ（全ユーザーアクセス可能）
+// URL: /admin/settings-dashboard
+Route::middleware(['auth'])->get('/admin/settings-dashboard', function () {
+    return view('admin.dashboard'); // ← resources/views/admin/dashboard.blade.php
+})->name('admin.settings.dashboard');
+
+
 
 // ====================================================================
 // 🌟 Laravel Breeze / Jetstream 認証ルート
