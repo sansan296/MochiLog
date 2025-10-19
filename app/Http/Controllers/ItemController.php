@@ -8,86 +8,52 @@ use Illuminate\Support\Str;
 
 class ItemController extends Controller
 {
-public function index(Request $request)
-{
-    $query = Item::with([
-        'user',
-        'tags',
-        'memos' => fn($q) => $q->latest()->with('user')
-    ]);
+    public function index(Request $request)
+    {
+        $query = Item::with(['user', 'tags', 'memos' => function ($q) {
+            $q->latest()->with('user');
+        }]);
 
-    // 商品名検索
-    if ($request->filled('keyword')) {
-        $query->where('item', 'like', '%' . $request->keyword . '%');
+        // 🔍 商品名キーワード検索
+        if ($request->filled('keyword')) {
+            $query->where('item', 'like', '%' . $request->keyword . '%');
+        }
+
+        // 📦 在庫数範囲
+        if ($request->filled('stock_min')) {
+            $query->where('quantity', '>=', (int)$request->stock_min);
+        }
+        if ($request->filled('stock_max')) {
+            $query->where('quantity', '<=', (int)$request->stock_max);
+        }
+
+        // 🗓️ 更新日範囲
+        if ($request->filled('updated_from')) {
+            $query->whereDate('updated_at', '>=', $request->updated_from);
+        }
+        if ($request->filled('updated_to')) {
+            $query->whereDate('updated_at', '<=', $request->updated_to);
+        }
+
+        // ⏰ 賞味期限範囲
+        if ($request->filled('expiration_from')) {
+            $query->whereDate('expiration_date', '>=', $request->expiration_from);
+        }
+        if ($request->filled('expiration_to')) {
+            $query->whereDate('expiration_date', '<=', $request->expiration_to);
+        }
+
+        $items = $query->latest()->get();
+
+        // JSONリクエストならデータを返す
+        if ($request->expectsJson()) {
+            return response()->json($items);
+        }
+
+        // 通常リクエストならBladeを表示
+        return view('items.index');
     }
 
-    // 在庫数フィルタ
-    if ($request->filled('stock_min')) {
-        $query->where('quantity', '>=', (int) $request->stock_min);
-    }
-    if ($request->filled('stock_max')) {
-        $query->where('quantity', '<=', (int) $request->stock_max);
-    }
-
-    // 更新日フィルタ
-    if ($request->filled('updated_from')) {
-        $query->whereDate('updated_at', '>=', $request->updated_from);
-    }
-    if ($request->filled('updated_to')) {
-        $query->whereDate('updated_at', '<=', $request->updated_to);
-    }
-
-    // 賞味期限フィルタ
-    if ($request->filled('expiration_from')) {
-        $query->whereDate('expiration_date', '>=', $request->expiration_from);
-    }
-    if ($request->filled('expiration_to')) {
-        $query->whereDate('expiration_date', '<=', $request->expiration_to);
-    }
-
-    // 並び順
-    $query->orderByDesc('pinned')
-          ->orderByRaw('CASE WHEN expiration_date IS NULL THEN 1 ELSE 0 END')
-          ->orderBy('expiration_date', 'asc')
-          ->orderBy('updated_at', 'desc');
-
-    // ✅ JSONリクエスト対応
-    if ($request->wantsJson()) {
-        $items = $query->get()->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'item' => $item->item,
-                'quantity' => $item->quantity,
-                'expiration_date' => $item->expiration_date,
-                'pinned' => (bool) $item->pinned,
-                'user' => [
-                    'id' => $item->user->id ?? null,
-                    'name' => $item->user->name ?? '不明',
-                ],
-                'tags' => $item->tags->map(fn($t) => [
-                    'id' => $t->id,
-                    'name' => $t->name,
-                ]),
-                'memos' => $item->memos->map(fn($m) => [
-                    'memo' => $m->memo,
-                    'user' => [
-                        'id' => $m->user->id ?? null,
-                        'name' => $m->user->name ?? '不明',
-                    ],
-                ]),
-                'fade_key' => uniqid('fade_'),
-            ];
-        });
-
-        return response()->json($items);
-    }
-
-    // ✅ 通常ページ表示
-    $items = $query->paginate(12);
-    $totalQuantity = $items->sum('quantity');
-
-    return view('items.index', compact('items', 'totalQuantity'));
-}
 
 
     /**

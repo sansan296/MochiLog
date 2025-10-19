@@ -331,18 +331,22 @@ function tagFilter() {
     // -------------------------------
     // 📦 アイテム一覧取得
     // -------------------------------
-    async fetchItems() {
-      try {
-        const res = await fetch(`{{ route('items.index') }}`, {
-          headers: { 'Accept': 'application/json' }
-        });
-        if (!res.ok) throw new Error('アイテム取得失敗');
-        this.items = await res.json();
-        this.filteredItems = this.items.map(i => ({ ...i, fade_key: i.id }));
-      } catch (e) {
-        console.error(e);
-      }
-    },
+  async fetchItems() {
+    try {
+      // 🌟 現在のURLのクエリパラメータをそのまま使用
+      const params = window.location.search;
+      const res = await fetch(`{{ route('items.index') }}${params}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!res.ok) throw new Error('アイテム取得失敗');
+      this.items = await res.json();
+      this.filteredItems = this.items.map(i => ({ ...i, fade_key: i.id }));
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
 
     // -------------------------------
     // ➕ タグ作成（全体 or 商品別）
