@@ -8,98 +8,87 @@ use Illuminate\Support\Str;
 
 class ItemController extends Controller
 {
-    /**
-     * 在庫一覧ページ
-     * - JSONリクエスト時：Alpine.jsが使用（tags付きで返す）
-     * - 通常リクエスト時：Bladeでページ表示
-     */
-    public function index(Request $request)
-    {
-        // ✅ 基本クエリ
-        $query = Item::with([
-            'user',
-            'tags',
-            'memos' => function ($q) {
-                $q->latest()->with('user');
-            }
-        ]);
+public function index(Request $request)
+{
+    $query = Item::with([
+        'user',
+        'tags',
+        'memos' => fn($q) => $q->latest()->with('user')
+    ]);
 
-        // 🔍 商品名検索
-        if ($request->filled('keyword')) {
-            $query->where('item', 'like', '%' . $request->keyword . '%');
-        }
+    // 商品名検索
+    if ($request->filled('keyword')) {
+        $query->where('item', 'like', '%' . $request->keyword . '%');
+    }
 
-        // 📦 在庫数フィルタ
-        if ($request->filled('stock_min')) {
-            $query->where('quantity', '>=', (int) $request->stock_min);
-        }
-        if ($request->filled('stock_max')) {
-            $query->where('quantity', '<=', (int) $request->stock_max);
-        }
+    // 在庫数フィルタ
+    if ($request->filled('stock_min')) {
+        $query->where('quantity', '>=', (int) $request->stock_min);
+    }
+    if ($request->filled('stock_max')) {
+        $query->where('quantity', '<=', (int) $request->stock_max);
+    }
 
-        // 🗓 更新日フィルタ
-        if ($request->filled('updated_from')) {
-            $query->whereDate('updated_at', '>=', $request->updated_from);
-        }
-        if ($request->filled('updated_to')) {
-            $query->whereDate('updated_at', '<=', $request->updated_to);
-        }
+    // 更新日フィルタ
+    if ($request->filled('updated_from')) {
+        $query->whereDate('updated_at', '>=', $request->updated_from);
+    }
+    if ($request->filled('updated_to')) {
+        $query->whereDate('updated_at', '<=', $request->updated_to);
+    }
 
-        // ⏰ 賞味期限フィルタ
-        if ($request->filled('expiration_from')) {
-            $query->whereDate('expiration_date', '>=', $request->expiration_from);
-        }
-        if ($request->filled('expiration_to')) {
-            $query->whereDate('expiration_date', '<=', $request->expiration_to);
-        }
+    // 賞味期限フィルタ
+    if ($request->filled('expiration_from')) {
+        $query->whereDate('expiration_date', '>=', $request->expiration_from);
+    }
+    if ($request->filled('expiration_to')) {
+        $query->whereDate('expiration_date', '<=', $request->expiration_to);
+    }
 
-        // ✅ 並び順：
-        // ① ピン付き優先（pinned=true が上）
-        // ② 賞味期限が近い順（nullは一番下）
-        // ③ 更新日が新しい順
-        $query->orderByDesc('pinned')
-              ->orderByRaw('CASE WHEN expiration_date IS NULL THEN 1 ELSE 0 END') // nullを後ろへ
-              ->orderBy('expiration_date', 'asc')
-              ->orderBy('updated_at', 'desc');
+    // 並び順
+    $query->orderByDesc('pinned')
+          ->orderByRaw('CASE WHEN expiration_date IS NULL THEN 1 ELSE 0 END')
+          ->orderBy('expiration_date', 'asc')
+          ->orderBy('updated_at', 'desc');
 
-if ($request->expectsJson()) {
-    $items = $query->get()->map(function ($item) {
-        // 🔹 必要なリレーションを JSON 用に整形
-        return [
-            'id' => $item->id,
-            'item' => $item->item,
-            'quantity' => $item->quantity,
-            'expiration_date' => $item->expiration_date,
-            'pinned' => (bool) $item->pinned,
-            'user' => [
-                'id' => $item->user->id ?? null,
-                'name' => $item->user->name ?? '不明',
-            ],
-            'tags' => $item->tags->map(fn($t) => [
-                'id' => $t->id,
-                'name' => $t->name,
-            ]),
-            'memos' => $item->memos->map(fn($m) => [
-                'memo' => $m->memo,
+    // ✅ JSONリクエスト対応
+    if ($request->wantsJson()) {
+        $items = $query->get()->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'item' => $item->item,
+                'quantity' => $item->quantity,
+                'expiration_date' => $item->expiration_date,
+                'pinned' => (bool) $item->pinned,
                 'user' => [
-                    'id' => $m->user->id ?? null,
-                    'name' => $m->user->name ?? '不明',
+                    'id' => $item->user->id ?? null,
+                    'name' => $item->user->name ?? '不明',
                 ],
-            ]),
-            'fade_key' => uniqid('fade_'),
-        ];
-    });
+                'tags' => $item->tags->map(fn($t) => [
+                    'id' => $t->id,
+                    'name' => $t->name,
+                ]),
+                'memos' => $item->memos->map(fn($m) => [
+                    'memo' => $m->memo,
+                    'user' => [
+                        'id' => $m->user->id ?? null,
+                        'name' => $m->user->name ?? '不明',
+                    ],
+                ]),
+                'fade_key' => uniqid('fade_'),
+            ];
+        });
 
-    return response()->json($items);
-}
+        return response()->json($items);
+    }
 
-
-    // ✅ 通常のページ表示
+    // ✅ 通常ページ表示
     $items = $query->paginate(12);
     $totalQuantity = $items->sum('quantity');
 
     return view('items.index', compact('items', 'totalQuantity'));
 }
+
 
     /**
      * 在庫登録フォーム表示
