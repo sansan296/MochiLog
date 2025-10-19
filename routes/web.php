@@ -113,13 +113,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/items/{item}/tags', [ItemTagController::class, 'index'])->name('items.tags.index');
     Route::post('/items/{item}/tags/toggle', [ItemTagController::class, 'toggle'])->name('items.tags.toggle');
 
-    // --------------------------------------------------------------
-    // 📊 在庫CSVインポート・エクスポート
-    // --------------------------------------------------------------
-    Route::get('/items/csv', [InventoryCsvController::class, 'index'])->name('items.csv.index');
-    Route::post('/items/csv/export', [InventoryCsvController::class, 'export'])->name('items.csv.export');
-    Route::post('/items/csv/import', [InventoryCsvController::class, 'import'])->name('items.csv.import');
-    Route::get('/items/csv/template', [InventoryCsvController::class, 'template'])->name('items.csv.template');
+// 📊 在庫CSVインポート・エクスポート（管理者専用）
+Route::middleware(['web', 'auth', 'admin'])->group(function () {
+    Route::get('/items/csv', [\App\Http\Controllers\InventoryCsvController::class, 'index'])->name('items.csv.index');
+    Route::post('/items/csv/export', [\App\Http\Controllers\InventoryCsvController::class, 'export'])->name('items.csv.export');
+    Route::post('/items/csv/import', [\App\Http\Controllers\InventoryCsvController::class, 'import'])->name('items.csv.import');
+    Route::get('/items/csv/template', [\App\Http\Controllers\InventoryCsvController::class, 'template'])->name('items.csv.template');
+});
+
+
+
+
 
     // --------------------------------------------------------------
     // 👤 プロフィール
@@ -137,10 +141,12 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('purchaseList')
         ->name('purchase_lists.destroy');
 
-    // --------------------------------------------------------------
-    // 📜 監査ログ
-    // --------------------------------------------------------------
-    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+
+    // 📜 監査ログ（管理者専用）
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])
+        ->middleware(['auth', 'admin'])
+        ->name('audit-logs.index');
+
 
     // 旧URL互換
     Route::get('/purchase-lists/audit-logs', fn() => redirect()->route('audit-logs.index'))
