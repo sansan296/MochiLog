@@ -155,32 +155,22 @@ Route::middleware('auth')->group(function () {
 // ====================================================================
 // 🌟 管理者用ルート群
 // ====================================================================
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
 
     // --------------------------------------------------------------
-    // 🔑 管理者ログイン
+    // 🧭 管理者ダッシュボード（管理者設定ページ）
     // --------------------------------------------------------------
-    Route::get('/login', [AdminController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AdminController::class, 'login'])->name('login.submit');
+    Route::get('/dashboard', function () {
+        return view('admin.dashboard'); // ← あなたの管理者設定ページ
+    })->name('dashboard');
 
     // --------------------------------------------------------------
-    // 🧭 管理者専用ページ & 権限管理
+    // 👑 管理者権限付与・解除
     // --------------------------------------------------------------
-    Route::middleware(['auth', 'admin'])->group(function () {
-        // 🧭 管理者ダッシュボード
-        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::post('/users/{user}/toggle-admin', [AdminController::class, 'toggleAdmin'])
+        ->name('users.toggle-admin');
+});
 
-        // 👑 管理者権限付与・解除
-        Route::post('/users/{user}/toggle-admin', [AdminController::class, 'toggleAdmin'])
-            ->name('users.toggle-admin');
-
-        // 全ユーザーがアクセスできる dashboard ページ
-    Route::get('/dashboard/view', function () {
-        return view('dashboard');
-    })->middleware(['auth'])->name('dashboard');
-
-    });
-}); 
 
 
 // 🌟 管理者設定ページ（全ユーザーアクセス可能）
