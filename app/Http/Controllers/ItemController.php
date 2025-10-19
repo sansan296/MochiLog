@@ -43,7 +43,11 @@ class ItemController extends Controller
             $query->whereDate('expiration_date', '<=', $request->expiration_to);
         }
 
-        $items = $query->latest()->get();
+        $items = $query
+            ->orderByDesc('pinned')  // ← ピン付き(true)を先に
+            ->orderBy('updated_at', 'desc') // 更新日が新しい順
+            ->get();
+
 
         // JSONリクエストならデータを返す
         if ($request->expectsJson()) {

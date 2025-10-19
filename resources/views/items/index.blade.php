@@ -463,22 +463,30 @@ function tagFilter() {
     // -------------------------------
     // 📌 ピン機能
     // -------------------------------
-    async togglePin(item) {
-      try {
-        const res = await fetch(`/items/${item.id}/pin`, {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-          },
-        });
-        const data = await res.json();
-        item.pinned = data.pinned;
-      } catch (e) {
-        alert('ピンの更新に失敗しました');
-        console.error(e);
-      }
-    },
+  async togglePin(item) {
+    try {
+      const res = await fetch(`/items/${item.id}/pin`, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json'
+        },
+      });
+      const data = await res.json();
+      item.pinned = data.pinned;
+
+      // ✅ フロント側で並び替え
+      this.filteredItems.sort((a, b) => {
+        if (a.pinned === b.pinned) return b.updated_at.localeCompare(a.updated_at);
+        return b.pinned - a.pinned;
+      });
+
+    } catch (e) {
+      alert('ピンの更新に失敗しました');
+      console.error(e);
+    }
+  },
+
 
     // -------------------------------
     // ⚙️ タグ作成モーダル
