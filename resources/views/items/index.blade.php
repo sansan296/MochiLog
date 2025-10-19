@@ -139,7 +139,7 @@
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
             x-text="tag.name"
             @click="toggleTagFilter(tag.id)"
-            @contextmenu.prevent="openTagContextMenu($event, tag)">
+            @contextmenu.stop.prevent="openTagContextMenu($event, tag)">
           </button>
         </template>
 
@@ -223,199 +223,343 @@
               詳細 →
             </a>
           </div>
+
         </template>
       </div>
     </div>
+
+
+
+
+    {{-- ================================================
+ 🖱️ タグ右クリックメニュー（美しいアイコン＆カラー付き）
+================================================ --}}
+<div 
+  x-show="contextMenu.show"
+  x-cloak
+  @click.away="contextMenu.show = false"
+  class="fixed z-50 bg-white/95 backdrop-blur-md border border-gray-200 shadow-2xl rounded-xl w-48 overflow-hidden transform transition-all duration-200"
+  :style="`top: ${contextMenu.y}px; left: ${contextMenu.x}px;`"
+  x-transition.origin-top-left
+  x-transition:enter="transition ease-out duration-200"
+  x-transition:enter-start="opacity-0 scale-95"
+  x-transition:enter-end="opacity-100 scale-100"
+  x-transition:leave="transition ease-in duration-150"
+  x-transition:leave-start="opacity-100 scale-100"
+  x-transition:leave-end="opacity-0 scale-95"
+>
+  <ul class="divide-y divide-gray-100">
+    {{-- ✏️ 編集ボタン --}}
+    <li>
+      <button 
+        @click="openEditTag"
+        class="group flex items-center gap-2 w-full text-left px-4 py-3 
+               text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 
+               transition-colors duration-150">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             class="w-5 h-5 text-gray-500 group-hover:text-indigo-500 transition"
+             fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+                d="M16.862 3.487a2.25 2.25 0 013.182 3.182L8.25 18.563l-4.5.75.75-4.5L16.862 3.487z" />
+        </svg>
+        <span class="font-medium">編集する</span>
+      </button>
+    </li>
+
+    {{-- 🗑️ 削除ボタン --}}
+    <li>
+      <button 
+        @click="confirmDeleteTag"
+        class="group flex items-center gap-2 w-full text-left px-4 py-3 
+               text-red-600 hover:bg-red-50 hover:text-red-700 
+               transition-colors duration-150">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             class="w-5 h-5 text-red-500 group-hover:text-red-600 transition"
+             fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+                d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span class="font-medium">削除する</span>
+      </button>
+    </li>
+  </ul>
+</div>
   </div>
 
-  {{-- ✅ Alpine.jsロジック --}}
-  @push('scripts')
-  <script>
-  function tagFilter() {
-   return {
-      searchOpen: false, // 検索フォーム開閉状態
-      tags: [],
-      items: [],
-      filteredItems: [],
-      selectedTags: [],
-      createModal: false,
-      newTagName: '',
-      error: '',
-      contextMenu: { show: false, x: 0, y: 0, target: null, itemId: null },
-      itemTagModal: { show: false, itemId: null, name: '', error: '' },
 
-      async init() {
+
+{{-- ✅ Alpine.jsロジック --}}
+@push('scripts')
+<script>
+function tagFilter() {
+  return {
+    // -------------------------------
+    // 🔧 初期データ
+    // -------------------------------
+    searchOpen: false,
+    tags: [],
+    items: [],
+    filteredItems: [],
+    selectedTags: [],
+    createModal: false,
+    newTagName: '',
+    error: '',
+    contextMenu: { show: false, x: 0, y: 0, target: null, itemId: null },
+    itemTagModal: { show: false, itemId: null, name: '', error: '' },
+
+    // -------------------------------
+    // 🏁 初期化処理
+    // -------------------------------
+    async init() {
+      await this.fetchTags();
+      await this.fetchItems();
+    },
+
+    // -------------------------------
+    // 🏷 タグ一覧取得
+    // -------------------------------
+    async fetchTags() {
+      try {
+        const res = await fetch(`{{ route('tags.index') }}`);
+        if (!res.ok) throw new Error('タグ取得失敗');
+        this.tags = await res.json();
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
+    // -------------------------------
+    // 📦 アイテム一覧取得
+    // -------------------------------
+    async fetchItems() {
+      try {
+        const res = await fetch(`{{ route('items.index') }}`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error('アイテム取得失敗');
+        this.items = await res.json();
+        this.filteredItems = this.items.map(i => ({ ...i, fade_key: i.id }));
+      } catch (e) {
+        console.error(e);
+      }
+    },
+
+    // -------------------------------
+    // ➕ タグ作成（全体 or 商品別）
+    // -------------------------------
+    async createTag() {
+      const payload = { name: this.newTagName.trim() };
+      if (this.itemTagModal.itemId) payload.item_id = this.itemTagModal.itemId;
+
+      try {
+        const res = await fetch(`{{ route('tags.store') }}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error('作成に失敗しました');
+
+        this.createModal = false;
+        this.itemTagModal.show = false;
         await this.fetchTags();
         await this.fetchItems();
-      },
+      } catch (e) {
+        console.error(e);
+        this.error = e.message;
+      }
+    },
 
-      async fetchTags() {
-        const res = await fetch(`{{ route('tags.index') }}`);
-        this.tags = await res.json();
-      },
+    // -------------------------------
+    // ✏️ タグ編集
+    // -------------------------------
+    async openEditTag() {
+      if (!this.contextMenu.target) return;
+      const newName = prompt("新しいタグ名を入力してください", this.contextMenu.target.name);
+      if (!newName || newName.trim() === this.contextMenu.target.name) {
+        this.contextMenu.show = false;
+        return;
+      }
 
-      async fetchItems() {
-        try {
-          const url = new URL(`{{ route('items.index') }}`);
-                  url.searchParams.set('json', '1');
-        @foreach (['keyword','stock_min','stock_max','updated_from','updated_to','expiration_from','expiration_to'] as $param)
-          @if (request($param))
-            url.searchParams.set('{{ $param }}', '{{ request($param) }}');
-          @endif
-        @endforeach
-          const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-          if (!res.ok) throw new Error('fetch failed');
-          this.items = await res.json();
-          this.filteredItems = this.items.map(i => ({ ...i, fade_key: i.id }));
-        } catch (e) {
-          console.error('アイテム取得に失敗しました', e);
-          this.items = [];
-        }
-      },
-
-
-      async togglePin(item) {
-        try {
-          const res = await fetch(`/items/${item.id}/pin`, {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': '{{ csrf_token() }}',
-              'Accept': 'application/json'
-            },
-          });
-          const data = await res.json();
-          item.pinned = data.pinned;
-        } catch (e) {
-          alert('ピンの更新に失敗しました');
-          console.error(e);
-        }
-      },
-
-      toggleTagFilter(tagId) {
-        if (this.selectedTags.includes(tagId)) {
-          this.selectedTags = this.selectedTags.filter(id => id !== tagId);
-        } else {
-          this.selectedTags.push(tagId);
-        }
-        this.applyFilter();
-      },
-
-      applyFilter() {
-        if (this.selectedTags.length === 0) {
-          this.filteredItems = this.items.map(i => ({ ...i, fade_key: Math.random() }));
-          return;
-        }
-        const selected = this.selectedTags.map(Number);
-        const filtered = this.items.filter(item =>
-          item.tags.some(tag => selected.includes(Number(tag.id)))
-        );
-        this.filteredItems = filtered.map(i => ({ ...i, fade_key: Math.random() }));
-      },
-
-      openCreateModal() {
-        this.newTagName = '';
-        this.error = '';
-        this.createModal = true;
-      },
-
-            async createTag() {
-        const res = await fetch(`{{ route('tags.store') }}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-          body: JSON.stringify({ name: this.newTagName.trim() }),
-        });
-        if (res.ok) {
-          this.createModal = false;
-          await this.fetchTags();
-        } else {
-          this.error = '作成に失敗しました';
-        }
-      },
-
-      openTagContextMenu(ev, tag, itemId = null) {
-        ev.preventDefault();
-        this.contextMenu = { show: true, x: ev.pageX, y: ev.pageY, target: tag, itemId: itemId };
-      },
-
-      async openEditTag() {
-        if (!this.contextMenu.target) return;
-        const newName = prompt("新しいタグ名を入力してください", this.contextMenu.target.name);
-        if (!newName || newName.trim() === this.contextMenu.target.name) {
-          this.contextMenu.show = false;
-          return;
-        }
-        const res = await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
+      try {
+        const res = await fetch(`/tags/${this.contextMenu.target.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-          body: JSON.stringify({ name: newName.trim() }),
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+          },
+          body: JSON.stringify({ name: newName.trim() })
         });
-        this.contextMenu.show = false;
-        if (res.ok) {
-          await this.fetchTags();
-          await this.fetchItems();
-        } else {
-          alert('タグの編集に失敗しました');
-        }
-      },
 
-      async confirmDeleteTag() {
-        if (!this.contextMenu.target) return;
-        if (!confirm(`「${this.contextMenu.target.name}」を削除しますか？`)) return;
-        const res = await fetch(`{{ url('/tags') }}/${this.contextMenu.target.id}`, {
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error('タグの更新に失敗');
+
+        this.contextMenu.show = false;
+        await this.fetchTags();
+        await this.fetchItems();
+      } catch (e) {
+        console.error(e);
+        alert(e.message);
+      }
+    },
+
+    // -------------------------------
+    // 🗑️ タグ削除
+    // -------------------------------
+    async confirmDeleteTag() {
+      if (!this.contextMenu.target) return;
+      if (!confirm(`「${this.contextMenu.target.name}」を削除しますか？`)) return;
+
+      try {
+        const res = await fetch(`/tags/${this.contextMenu.target.id}`, {
           method: 'DELETE',
-          headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+          headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
         });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error('削除に失敗');
+
         this.contextMenu.show = false;
-        if (res.ok) {
-          await this.fetchTags();
-          await this.fetchItems();
-        } else {
-          alert('タグの削除に失敗しました');
-        }
-      },
+        await this.fetchTags();
+        await this.fetchItems();
+      } catch (e) {
+        console.error(e);
+        alert(e.message);
+      }
+    },
 
-      openItemTagModal(id) {
-        this.itemTagModal = { show: true, itemId: id, name: '', error: '' };
-      },
+    // -------------------------------
+    // 🧭 タグ絞り込み
+    // -------------------------------
+    toggleTagFilter(tagId) {
+      if (this.selectedTags.includes(tagId)) {
+        this.selectedTags = this.selectedTags.filter(id => id !== tagId);
+      } else {
+        this.selectedTags.push(tagId);
+      }
+      this.applyFilter();
+    },
 
-      async addTagToItem() {
-        const name = this.itemTagModal.name.trim();
-        if (!name) {
-          this.itemTagModal.error = 'タグ名を入力してください';
-          return;
-        }
+    applyFilter() {
+      if (this.selectedTags.length === 0) {
+        this.filteredItems = this.items.map(i => ({ ...i, fade_key: Math.random() }));
+        return;
+      }
+      const selected = this.selectedTags.map(Number);
+      const filtered = this.items.filter(item =>
+        item.tags.some(tag => selected.includes(Number(tag.id)))
+      );
+      this.filteredItems = filtered.map(i => ({ ...i, fade_key: Math.random() }));
+    },
+
+    // -------------------------------
+    // 📌 ピン機能
+    // -------------------------------
+    async togglePin(item) {
+      try {
+        const res = await fetch(`/items/${item.id}/pin`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+          },
+        });
+        const data = await res.json();
+        item.pinned = data.pinned;
+      } catch (e) {
+        alert('ピンの更新に失敗しました');
+        console.error(e);
+      }
+    },
+
+    // -------------------------------
+    // ⚙️ タグ作成モーダル
+    // -------------------------------
+    openCreateModal() {
+      this.newTagName = '';
+      this.error = '';
+      this.createModal = true;
+    },
+
+    // -------------------------------
+    // 🧩 コンテキストメニュー
+    // -------------------------------
+    openTagContextMenu(ev, tag, itemId = null) {
+      ev.preventDefault();
+      this.contextMenu = { show: true, x: ev.pageX, y: ev.pageY, target: tag, itemId: itemId };
+      console.log("右クリックしたタグ:", this.contextMenu.target);
+    },
+
+    // -------------------------------
+    // 🏷️ 商品タグ追加モーダル
+    // -------------------------------
+    openItemTagModal(id) {
+      this.itemTagModal = { show: true, itemId: id, name: '', error: '' };
+    },
+
+    // -------------------------------
+    // 🏷️ 商品タグ追加処理
+    // -------------------------------
+    async addTagToItem() {
+      const name = this.itemTagModal.name.trim();
+      if (!name) {
+        this.itemTagModal.error = 'タグ名を入力してください';
+        return;
+      }
+
+      try {
         const res = await fetch(`{{ route('tags.store') }}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+          headers: { 
+            'Content-Type': 'application/json', 
+            'X-CSRF-TOKEN': '{{ csrf_token() }}' 
+          },
           body: JSON.stringify({ name: name, item_id: this.itemTagModal.itemId }),
         });
 
-        if (res.ok) {
-          this.itemTagModal.show = false;
-          await this.fetchItems();
-        } else {
-          this.itemTagModal.error = '追加に失敗しました';
-        }
-      },
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error('追加に失敗しました');
+
+        this.itemTagModal.show = false;
+        await this.fetchItems();
+      } catch (e) {
+        this.itemTagModal.error = e.message;
+        console.error(e);
+      }
+    },
+
+    // -------------------------------
+    // ⏰ 賞味期限関連
+    // -------------------------------
+    formatExpiration(dateStr) {
+      if (!dateStr) return 'なし';
+      const date = new Date(dateStr);
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const now = new Date();
+      const diff = Math.ceil((date - now) / (1000 * 60 * 60 * 24));
+      return diff < 0 ? `${y}/${m}/${d}（期限切れ）` : `${y}/${m}/${d}（あと ${diff} 日）`;
+    },
+
+    isExpired(dateStr) {
+      if (!dateStr) return false;
+      return new Date(dateStr) < new Date();
+    },
+  };
+
+  
+}
 
 
-      formatExpiration(dateStr) {
-        if (!dateStr) return 'なし';
-        const date = new Date(dateStr);
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        const now = new Date();
-        const diff = Math.ceil((date - now) / (1000 * 60 * 60 * 24));
-        return diff < 0 ? `${y}/${m}/${d}（期限切れ）` : `${y}/${m}/${d}（あと ${diff} 日）`;
-      },
+</script>
+@endpush
 
-      isExpired(dateStr) {
-        if (!dateStr) return false;
-        return new Date(dateStr) < new Date();
-      },
-    };
-  }
-  </script>
-  @endpush
+
+
+
 </x-app-layout>
