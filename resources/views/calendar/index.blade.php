@@ -8,23 +8,23 @@
   <div x-data="calendarApp()" x-init="init()" class="flex flex-col md:flex-row gap-6 max-w-7xl mx-auto px-4 py-6">
 
     {{-- 🗓️ カレンダー --}}
-    <div class="flex-1 bg-white rounded-xl shadow p-4">
+    <div class="flex-1 bg-white rounded-xl shadow p-4 border border-gray-200">
       <div id="calendar"></div>
     </div>
 
     {{-- 📋 選択中の日の予定 --}}
-    <div class="relative w-full md:w-80 bg-gray-50 rounded-xl shadow p-4">
-      <h3 class="text-lg font-bold text-gray-700 mb-3 flex items-center gap-2">
+    <div class="relative w-full md:w-80 bg-white rounded-xl shadow border border-gray-200 p-4">
+      <h3 class="text-lg font-bold text-gray-700 mb-3 flex items-center gap-2 border-b pb-2">
         📋 <span x-text="selectedLabel"></span>
       </h3>
 
       <template x-if="events.length === 0">
-        <p class="text-gray-500 text-sm">この日の予定はありません。</p>
+        <p class="text-gray-500 text-sm text-center">この日の予定はありません。</p>
       </template>
 
       <ul class="space-y-3 pb-16" x-show="events.length > 0">
         <template x-for="event in events" :key="event.id">
-          <li class="bg-white rounded-lg shadow p-3 border-l-4"
+          <li class="bg-gray-50 rounded-lg shadow p-3 border-l-4"
               :class="event.type === '入庫' ? 'border-green-400' : 'border-blue-500'">
             <div class="flex justify-between items-center mb-1">
               <span class="font-semibold text-gray-800 text-sm"
@@ -57,7 +57,7 @@
         </template>
       </ul>
 
-      {{-- ➕ 予定追加ボタン（右下固定） --}}
+      {{-- ➕ 予定追加ボタン --}}
       <button id="addEventBtn"
               class="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm shadow transition">
         ＋ 追加予定
@@ -68,7 +68,7 @@
   {{-- 🌟 予定追加モーダル --}}
   <div id="eventModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-2xl shadow-xl p-6 w-96 animate-fade-in">
-      <h3 class="text-xl font-bold mb-4">📅 新しい予定を追加</h3>
+      <h3 class="text-xl font-bold mb-4 text-center">📅 新しい予定を追加</h3>
       <div class="space-y-3">
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1">種別</label>
@@ -101,14 +101,27 @@
     </div>
   </div>
 
+  {{-- 🟢 在庫選択モーダル（同名在庫がある場合） --}}
+  <div id="selectItemModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-6 w-96 animate-fade-in">
+      <h3 class="text-lg font-bold text-gray-800 mb-3 text-center">📦 出庫対象を選択</h3>
+      <p class="text-gray-600 text-sm mb-3 text-center">同名の商品が複数あります。出庫する商品を選んでください。</p>
+      <div id="itemOptions" class="space-y-2 max-h-60 overflow-y-auto"></div>
+      <div class="flex justify-end mt-4">
+        <button id="closeSelectItemModal"
+                class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm text-gray-700">閉じる</button>
+      </div>
+    </div>
+  </div>
+
   {{-- 🗑 削除確認モーダル --}}
   <div id="deleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-2xl shadow-xl p-6 w-80 animate-fade-in">
-      <h3 class="text-lg font-bold text-gray-800 mb-3">🗑 予定を削除しますか？</h3>
-      <p class="text-gray-600 text-sm mb-4" x-text="`「${deleteTargetName}」を削除してもよろしいですか？`"></p>
-      <div class="flex justify-end gap-3">
+      <h3 class="text-lg font-bold text-gray-800 mb-3 text-center">🗑 予定を削除しますか？</h3>
+      <p class="text-gray-600 text-sm mb-4 text-center" x-text="`「${deleteTargetName}」を削除してもよろしいですか？`"></p>
+      <div class="flex justify-center gap-3">
         <button id="cancelDelete" class="px-3 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm">キャンセル</button>
-        <button id="confirmDelete" class="px-3 py-2 rounded bg-red-600 hover:bg-red-700 text-white text-sm">削除する</button>
+        <button id="confirmDelete" class="px-3 py-2 rounded bg-red-600 hover:bg-red-700 text-white text-sm">削除</button>
       </div>
     </div>
   </div>
@@ -136,6 +149,7 @@
         events: [],
         addModal: null,
         deleteModal: null,
+        selectItemModal: null,
         deleteTargetId: null,
         deleteTargetName: '',
         isSaving: false,
@@ -165,17 +179,20 @@
         async init() {
           this.addModal = document.getElementById('eventModal');
           this.deleteModal = document.getElementById('deleteModal');
+          this.selectItemModal = document.getElementById('selectItemModal');
 
           const addBtn = document.getElementById('addEventBtn');
           const cancelBtn = document.getElementById('cancelEvent');
           const saveBtn = document.getElementById('saveEvent');
           const cancelDelete = document.getElementById('cancelDelete');
           const confirmDelete = document.getElementById('confirmDelete');
+          const closeSelectItemModal = document.getElementById('closeSelectItemModal');
+          const itemOptions = document.getElementById('itemOptions');
 
           cancelDelete.addEventListener('click', () => this.deleteModal.classList.add('hidden'));
           confirmDelete.addEventListener('click', () => this.confirmDelete());
+          closeSelectItemModal.addEventListener('click', () => this.selectItemModal.classList.add('hidden'));
 
-          // 初期表示
           await this.fetchEvents(this.selectedDate);
 
           // カレンダー設定
@@ -201,11 +218,11 @@
               const isNyuko = title.startsWith('入庫');
               const isShukko = title.startsWith('出庫');
               if (isNyuko) {
-                info.el.style.backgroundColor = '#4ade80'; // green-400
+                info.el.style.backgroundColor = '#4ade80';
                 info.el.style.borderColor = '#4ade80';
                 info.el.style.color = '#1f2937';
               } else if (isShukko) {
-                info.el.style.backgroundColor = '#3b82f6'; // blue-500
+                info.el.style.backgroundColor = '#3b82f6';
                 info.el.style.borderColor = '#3b82f6';
                 info.el.style.color = '#ffffff';
               }
@@ -217,68 +234,69 @@
           addBtn.addEventListener('click', () => this.addModal.classList.remove('hidden'));
           cancelBtn.addEventListener('click', () => this.addModal.classList.add('hidden'));
 
-          // 予定保存
-saveBtn.addEventListener('click', async () => {
-  if (this.isSaving) return;
-  this.isSaving = true;
-  saveBtn.disabled = true;
+          // 予定保存（同名商品チェック含む）
+          saveBtn.addEventListener('click', async () => {
+            if (this.isSaving) return;
+            this.isSaving = true;
+            saveBtn.disabled = true;
 
-  const type = document.getElementById('eventType').value;
-  const item_name = document.getElementById('eventItem').value;
-  const quantity = document.getElementById('eventQuantity').value;
-  const notes = document.getElementById('eventNotes').value;
+            const type = document.getElementById('eventType').value;
+            const item_name = document.getElementById('eventItem').value;
+            const quantity = document.getElementById('eventQuantity').value;
+            const notes = document.getElementById('eventNotes').value;
 
-  try {
-    const res = await fetch('{{ route('calendar.store') }}', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-      },
-      body: JSON.stringify({ type, date: this.selectedDate, item_name, quantity, notes })
-    });
+            try {
+              const res = await fetch('{{ route('calendar.store') }}', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ type, date: this.selectedDate, item_name, quantity, notes })
+              });
+              const data = await res.json();
 
-    const data = await res.json();
-
-    // ✅ 同名アイテムが複数ある場合
-    if (data.multiple) {
-      let msg = '同名の商品が複数見つかりました。どれを出庫しますか？\n\n';
-      data.options.forEach(opt => {
-        msg += `${opt.id}: ${opt.name}（在庫 ${opt.quantity}）\n`;
-      });
-      const selectedId = prompt(msg + '\n対象の商品IDを入力してください:');
-      if (selectedId) {
-        await fetch('{{ route('calendar.store') }}', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-          },
-          body: JSON.stringify({
-            type,
-            date: this.selectedDate,
-            item_id: selectedId,
-            quantity,
-            notes
-          })
-        });
-      }
-    } else if (data.success) {
-      alert('予定を追加しました！');
-    } else {
-      alert('予定の追加に失敗しました。');
-    }
-
-    this.addModal.classList.add('hidden');
-    await this.fetchEvents(this.selectedDate);
-  } catch (e) {
-    alert('通信エラーが発生しました。');
-  } finally {
-    this.isSaving = false;
-    saveBtn.disabled = false;
-  }
-});
-
+              if (data.multiple) {
+                // 🟢 同名アイテム候補をモーダルで表示
+                itemOptions.innerHTML = '';
+                data.options.forEach(opt => {
+                  const btn = document.createElement('button');
+                  btn.textContent = `${opt.name}（在庫 ${opt.quantity}）`;
+                  btn.className = 'w-full text-left px-3 py-2 border rounded hover:bg-blue-100 transition text-sm';
+                  btn.addEventListener('click', async () => {
+                    await fetch('{{ route('calendar.store') }}', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                      },
+                      body: JSON.stringify({
+                        type,
+                        date: this.selectedDate,
+                        item_id: opt.id,
+                        quantity,
+                        notes
+                      })
+                    });
+                    this.selectItemModal.classList.add('hidden');
+                    await this.fetchEvents(this.selectedDate);
+                  });
+                  itemOptions.appendChild(btn);
+                });
+                this.selectItemModal.classList.remove('hidden');
+              } else if (data.success) {
+                this.addModal.classList.add('hidden');
+                await this.fetchEvents(this.selectedDate);
+              } else {
+                alert('予定の追加に失敗しました。');
+              }
+            } catch (e) {
+              alert('通信エラーが発生しました。');
+            } finally {
+              this.isSaving = false;
+              saveBtn.disabled = false;
+            }
+          });
         }
       };
     }
