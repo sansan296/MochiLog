@@ -48,6 +48,34 @@ class CalendarEventController extends Controller
         return response()->json($events);
     }
 
+    /**
+    * 特定日の予定をJSONで取得
+    */
+    public function getByDate(Request $request)
+    {
+        $date = $request->input('date');
+        if (!$date) {
+            return response()->json(['error' => '日付が指定されていません'], 400);
+        }
+
+        $events = CalendarEvent::with('item')
+            ->where('user_id', Auth::id())
+            ->whereDate('date', $date)
+            ->orderBy('date')
+            ->get()
+            ->map(fn($e) => [
+                'id' => $e->id,
+                'type' => $e->type,
+                'name' => $e->item->item ?? $e->item_name ?? '未指定',
+                'quantity' => $e->quantity,
+                'notes' => $e->notes,
+                'status' => $e->status,
+            ]);
+
+        return response()->json($events);
+    }
+
+
 
 
     /**

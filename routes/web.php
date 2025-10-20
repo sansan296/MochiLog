@@ -203,6 +203,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
     //入庫・出庫
     Route::get('/calendar/history', [CalendarEventController::class, 'history'])->name('calendar.history');
+    //選択した日の予定詳細
+    Route::get('/calendar/date', [CalendarEventController::class, 'getByDate'])->name('calendar.byDate');
 
 
 // 🌟 管理者設定ページ（全ユーザーアクセス可能）
