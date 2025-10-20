@@ -87,32 +87,37 @@ public function store(Request $request)
         'type' => 'required|in:入庫,出庫',
         'date' => 'required|date',
         'quantity' => 'nullable|integer|min:1',
-        'item_name' => 'nullable|string|max:255', // ✅ 自由入力
+        'item_name' => 'nullable|string|max:255',
         'item_id' => 'nullable|exists:items,id',
         'notes' => 'nullable|string|max:255',
     ]);
 
     $validated['user_id'] = Auth::id();
 
-    // ✅ 「出庫」で item_id が指定されていない場合、名前から在庫を特定
+    // 出庫時に同名アイテムが複数ある場合は候補を返す
     if ($validated['type'] === '出庫' && empty($validated['item_id']) && !empty($validated['item_name'])) {
-        $matchedItems = Item::where('item', $validated['item_name'])->get();
+        $matchedItems = Item::where('item', $validated['item_name'])
+            ->where('quantity', '>', 0)
+            ->get();
 
         if ($matchedItems->count() > 1) {
             return response()->json([
-                'success' => false,
-                'error' => '同名の在庫が複数あります。どれを出庫するか選択してください。',
-                'options' => $matchedItems->pluck('id', 'item')
-            ], 409); // 409 Conflict
+                'multiple' => true,
+                'options' => $matchedItems->map(fn($i) => [
+                    'id' => $i->id,
+                    'name' => $i->item,
+                    'quantity' => $i->quantity,
+                ])
+            ]);
         } elseif ($matchedItems->count() === 1) {
             $validated['item_id'] = $matchedItems->first()->id;
         }
     }
 
     CalendarEvent::create($validated);
-
     return response()->json(['success' => true]);
 }
+
 
 
     /**
@@ -145,4 +150,35 @@ public function store(Request $request)
         return view('calendar.history', compact('completedEvents'));
     }
 
-}
+    public function complete(CalendarEvent $event)
+    {
+        // 予定を完了に更新
+        $event->update(['status' => '完了']);
+
+        // ---------------------------------
+        // 入庫処理：在庫追加ページに遷移
+        // ---------------------------------
+        if ($event->type === '入庫') {
+            // 入庫の場合 → 在庫登録ページに遷移（初期値を渡す）
+            return redirect()->route('items.create')->with([
+                'prefill_item_name' => $event->item_name ?? ($event->item->item ?? ''),
+                'prefill_quantity' => $event->quantity,
+                'calendar_event_id' => $event->id,
+            ]);
+        }
+
+        // ---------------------------------
+        // 出庫処理：該当在庫を減らす
+        // ---------------------------------
+        if ($event->type === '出庫' && $event->item_id && $event->quantity) {
+            $item = Item::find($event->item_id);
+            if ($item) {
+                $newQuantity = max(0, $item->quantity - $event->quantity);
+                $item->update(['quantity' => $newQuantity]);
+            }
+        }
+
+        return back()->with('success', '予定を完了しました。');
+    }
+
+    }
