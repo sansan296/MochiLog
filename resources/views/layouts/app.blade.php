@@ -99,7 +99,7 @@
                     </a>
 
                     <!-- 👤 プロフィール -->
-                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 hover:opacity-80">
+                    <a href="{{ route('profile.view') }}" class="flex items-center gap-2 hover:opacity-80">
                         <i data-lucide="user-circle" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
                         <span class="hidden sm:inline">プロフィール</span>
                     </a>
