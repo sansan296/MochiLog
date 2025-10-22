@@ -103,10 +103,12 @@
           </a>
 
           <!-- 管理者設定 -->
-          <a href="{{ route('admin.settings.dashboard') }}" class="{{ $card }}">
+          <a href="{{ route('admin.password.gate.show') }}" class="{{ $card }}">
             <h3 class="{{ $title }} text-[0.95rem] sm:text-2xl truncate text-center">⚙️ 管理者設定</h3>
-            <p class="hidden sm:block {{ $desc }}">管理者設定ページ（Dashboard）を開きます。</p>
+            <p class="hidden sm:block {{ $desc }}">パスワード入力後に管理者設定ページを開きます。</p>
           </a>
+
+
         </div>
       </div>
     </main>

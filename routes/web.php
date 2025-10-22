@@ -17,7 +17,8 @@ use App\Http\Controllers\{
     ItemTagController,
     InventoryCsvController,
     SettingsController,
-    CalendarEventController
+    CalendarEventController,
+    AdminGateController // 💡 追加
 };
 
 /*
@@ -88,14 +89,6 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('id')
         ->name('bookmarks.destroy');
 
-
-    Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/items/csv',        [InventoryCsvController::class, 'index'])->name('items.csv.index');
-    Route::post('/items/csv/export',[InventoryCsvController::class, 'export'])->name('items.csv.export');
-    Route::post('/items/csv/import',[InventoryCsvController::class, 'import'])->name('items.csv.import');
-    Route::get('/items/csv/template',[InventoryCsvController::class, 'template'])->name('items.csv.template');
-});
-
     // --------------------------------------------------------------
     // 🗓️ 入出庫スケジュールカレンダー
     // --------------------------------------------------------------
@@ -107,8 +100,6 @@ Route::middleware('auth')->group(function () {
 
     // ✅ 入庫完了時に在庫数量を自動更新
     Route::post('/calendar/events/{event}/complete', [CalendarEventController::class, 'complete'])->name('calendar.complete');
-
-
 
     // --------------------------------------------------------------
     // 📦 在庫（Item）・メモ（Memo）
@@ -129,73 +120,89 @@ Route::middleware('auth')->group(function () {
     Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
     Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update');
     Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
-
 });
 
 
-    // アイテムごとのタグ操作
-    Route::get('/items/{item}/tags', [ItemTagController::class, 'index'])->name('items.tags.index');
-    Route::post('/items/{item}/tags/toggle', [ItemTagController::class, 'toggle'])->name('items.tags.toggle');
+// --------------------------------------------------------------
+// 🏷 アイテムごとのタグ操作
+// --------------------------------------------------------------
+Route::get('/items/{item}/tags', [ItemTagController::class, 'index'])->name('items.tags.index');
+Route::post('/items/{item}/tags/toggle', [ItemTagController::class, 'toggle'])->name('items.tags.toggle');
 
+
+// --------------------------------------------------------------
 // 📊 在庫CSVインポート・エクスポート（管理者専用）
+// --------------------------------------------------------------
 Route::middleware(['web', 'auth', 'admin'])->group(function () {
-    Route::get('/items/csv', [\App\Http\Controllers\InventoryCsvController::class, 'index'])->name('items.csv.index');
-    Route::post('/items/csv/export', [\App\Http\Controllers\InventoryCsvController::class, 'export'])->name('items.csv.export');
-    Route::post('/items/csv/import', [\App\Http\Controllers\InventoryCsvController::class, 'import'])->name('items.csv.import');
-    Route::get('/items/csv/template', [\App\Http\Controllers\InventoryCsvController::class, 'template'])->name('items.csv.template');
+    Route::get('/items/csv', [InventoryCsvController::class, 'index'])->name('items.csv.index');
+    Route::post('/items/csv/export', [InventoryCsvController::class, 'export'])->name('items.csv.export');
+    Route::post('/items/csv/import', [InventoryCsvController::class, 'import'])->name('items.csv.import');
+    Route::get('/items/csv/template', [InventoryCsvController::class, 'template'])->name('items.csv.template');
 });
 
 
+// --------------------------------------------------------------
+// 👤 プロフィール
+// --------------------------------------------------------------
+Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+Route::middleware(['auth'])->get('/profile/view', [ProfileController::class, 'show'])->name('profile.view');
 
 
-
-    // --------------------------------------------------------------
-    // 👤 プロフィール
-    // --------------------------------------------------------------
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    Route::middleware(['auth'])->get('/profile/view', [ProfileController::class, 'show'])->name('profile.view');
-
-
-    // --------------------------------------------------------------
-    // 🛒 購入リスト
-    // --------------------------------------------------------------
-    Route::get('/purchase-lists', [PurchaseListController::class, 'index'])->name('purchase_lists.index');
-    Route::post('/purchase-lists', [PurchaseListController::class, 'store'])->name('purchase_lists.store');
-    Route::delete('/purchase-lists/{purchaseList}', [PurchaseListController::class, 'destroy'])
-        ->whereNumber('purchaseList')
-        ->name('purchase_lists.destroy');
+// --------------------------------------------------------------
+// 🛒 購入リスト
+// --------------------------------------------------------------
+Route::get('/purchase-lists', [PurchaseListController::class, 'index'])->name('purchase_lists.index');
+Route::post('/purchase-lists', [PurchaseListController::class, 'store'])->name('purchase_lists.store');
+Route::delete('/purchase-lists/{purchaseList}', [PurchaseListController::class, 'destroy'])
+    ->whereNumber('purchaseList')
+    ->name('purchase_lists.destroy');
 
 
-    // 📜 監査ログ（管理者専用）
-    Route::get('/audit-logs', [AuditLogController::class, 'index'])
-        ->middleware(['auth', 'admin'])
-        ->name('audit-logs.index');
+// --------------------------------------------------------------
+// 📜 監査ログ（管理者専用）
+// --------------------------------------------------------------
+Route::get('/audit-logs', [AuditLogController::class, 'index'])
+    ->middleware(['auth', 'admin'])
+    ->name('audit-logs.index');
+
+// 旧URL互換
+Route::get('/purchase-lists/audit-logs', fn() => redirect()->route('audit-logs.index'))
+    ->name('legacy.audit-logs');
 
 
-    // 旧URL互換
-    Route::get('/purchase-lists/audit-logs', fn() => redirect()->route('audit-logs.index'))
-        ->name('legacy.audit-logs');
-
-    // --------------------------------------------------------------
-    // 📌 ピン機能（Ajax対応）
-    // --------------------------------------------------------------
-   Route::get('/items', [ItemController::class, 'index'])->name('items.index');
-    Route::post('/items/{item}/pin', [ItemController::class, 'togglePin'])->name('items.pin');
+// --------------------------------------------------------------
+// 📌 ピン機能（Ajax対応）
+// --------------------------------------------------------------
+Route::get('/items', [ItemController::class, 'index'])->name('items.index');
+Route::post('/items/{item}/pin', [ItemController::class, 'togglePin'])->name('items.pin');
 
 
 // ====================================================================
-// 🌟 管理者用ルート群
+// 💡 Admin Access Gate Routes (共通パスワード認証用ルート)
 // ====================================================================
-Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+Route::middleware(['auth'])->group(function () {
+    // 1. パスワード入力フォーム
+    Route::get('/admin/password-gate', [AdminGateController::class, 'show'])
+        ->name('admin.password.gate.show');
+
+    // 2. パスワード認証処理
+    Route::post('/admin/password-gate', [AdminGateController::class, 'check'])
+        ->name('admin.password.gate.check');
+});
+
+
+// ====================================================================
+// 🌟 管理者用ルート群 (共通パスワード認証が必要)
+// ====================================================================
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->group(function () {
 
     // --------------------------------------------------------------
     // 🧭 管理者ダッシュボード（管理者設定ページ）
     // --------------------------------------------------------------
     Route::get('/dashboard', function () {
-        return view('admin.dashboard'); // ← あなたの管理者設定ページ
+        return view('admin.dashboard'); // ← 管理者設定ページ
     })->name('dashboard');
 
     // --------------------------------------------------------------
@@ -203,20 +210,39 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // --------------------------------------------------------------
     Route::post('/users/{user}/toggle-admin', [AdminController::class, 'toggleAdmin'])
         ->name('users.toggle-admin');
+
+    // --------------------------------------------------------------
+    // 💡 共通管理者パスワードの更新ルート
+    // --------------------------------------------------------------
+    Route::put('/update-admin-password', [SettingsController::class, 'updateAdminPassword'])
+        ->name('password.update');
 });
 
-    //入庫・出庫
-    Route::get('/calendar/history', [CalendarEventController::class, 'history'])->name('calendar.history');
-    //選択した日の予定詳細
-    Route::get('/calendar/date', [CalendarEventController::class, 'getByDate'])->name('calendar.byDate');
+    Route::post('/settings/update-admin-password', [SettingsController::class, 'updateAdminPassword'])
+        ->middleware(['auth', 'admin.access'])
+        ->name('settings.updateAdminPassword');
 
 
-// 🌟 管理者設定ページ（全ユーザーアクセス可能）
-// URL: /admin/settings-dashboard
+
+// 📜 監査ログ（共通パスワード認証が必要）
+Route::middleware(['auth', 'admin.access'])->group(function () {
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])
+        ->name('audit-logs.index');
+});
+
+
+// ====================================================================
+// 🗓️ カレンダー追加機能（履歴・日付別）
+// ====================================================================
+Route::get('/calendar/history', [CalendarEventController::class, 'history'])->name('calendar.history');
+Route::get('/calendar/date', [CalendarEventController::class, 'getByDate'])->name('calendar.byDate');
+
+
+// 🌟 管理者設定ページ
+// 💡 下記は旧ルート（今後不要ならコメントアウトOK）
 Route::middleware(['auth'])->get('/admin/settings-dashboard', function () {
-    return view('admin.dashboard'); // ← resources/views/admin/dashboard.blade.php
+    return view('admin.dashboard');
 })->name('admin.settings.dashboard');
-
 
 
 // ====================================================================

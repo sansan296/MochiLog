@@ -17,6 +17,34 @@
           </div>
       @endif
 
+      {{-- 💡 共通管理者パスワード変更フォーム --}}
+      <div class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-lg mb-10">
+          <h3 class="text-xl sm:text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100 border-b pb-2">
+              共通管理者パスワードの更新
+          </h3>
+
+          <form method="POST" action="{{ route('admin.password.update') }}" class="mt-6 space-y-6">
+              @csrf
+              @method('PUT')
+
+              <div>
+                  <x-input-label for="admin_password" :value="__('新しい共通パスワード')" />
+                  <x-text-input id="admin_password" name="admin_password" type="password" class="mt-1 block w-full" />
+                  <x-input-error :messages="$errors->get('admin_password')" class="mt-2" />
+              </div>
+
+              <div>
+                  <x-input-label for="admin_password_confirmation" :value="__('新しい共通パスワード(確認用)')" />
+                  <x-text-input id="admin_password_confirmation" name="admin_password_confirmation" type="password" class="mt-1 block w-full" />
+                  <x-input-error :messages="$errors->get('admin_password_confirmation')" class="mt-2" />
+              </div>
+
+              <div class="flex items-center justify-end gap-4">
+                  <x-primary-button>{{ __('パスワードを更新') }}</x-primary-button>
+              </div>
+          </form>
+      </div>
+
       {{-- タイトル --}}
       <h3 class="text-lg sm:text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100">ユーザー</h3>
 
