@@ -1,52 +1,55 @@
 <x-app-layout>
   <x-slot name="header">
-    <h2 class="font-semibold text-3xl text-gray-800 dark:text-gray-100 leading-tight text-center">
+    <h2 class="text-xl sm:text-2xl font-semibold text-center text-gray-800 dark:text-white leading-tight">
        管理者設定ページ
     </h2>
   </x-slot>
 
-  <div class="max-w-5xl mx-auto py-10 px-6">
+  <div class="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
       @if (session('success'))
-          <div class="bg-green-100 text-green-800 px-4 py-3 rounded-xl shadow mb-6 text-center">
+          <div class="bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100 px-4 py-3 rounded-xl shadow mb-6 text-center text-sm sm:text-base">
               {{ session('success') }}
           </div>
       @endif
       @if (session('error'))
-          <div class="bg-red-100 text-red-800 px-4 py-3 rounded-xl shadow mb-6 text-center">
+          <div class="bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100 px-4 py-3 rounded-xl shadow mb-6 text-center text-sm sm:text-base">
               {{ session('error') }}
           </div>
       @endif
 
-      <h3 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100">ユーザー一覧</h3>
+      {{-- タイトル --}}
+      <h3 class="text-lg sm:text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100">ユーザー</h3>
 
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      {{-- 📱 スマホ対応用のラッパー --}}
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-x-auto border border-gray-100 dark:border-gray-700">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm sm:text-base">
               <thead class="bg-gray-100 dark:bg-gray-700">
                   <tr>
-                      <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">名前</th>
-                      <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">メール</th>
-                      <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-200">権限</th>
-                      <th class="px-6 py-3"></th>
+                      <th class="px-4 sm:px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">名前</th>
+                      <th class="px-4 sm:px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">メール</th>
+                      <th class="px-4 sm:px-6 py-3 text-center font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">権限</th>
+                      <th class="px-4 sm:px-6 py-3"></th>
                   </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                   @foreach (\App\Models\User::all() as $user)
-                      <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                          <td class="px-6 py-4 text-gray-800 dark:text-gray-100">{{ $user->name }}</td>
-                          <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ $user->email }}</td>
-                          <td class="px-6 py-4 text-center">
+                      <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                          <td class="px-4 sm:px-6 py-3 text-gray-800 dark:text-gray-100 break-words">{{ $user->name }}</td>
+                          <td class="px-4 sm:px-6 py-3 text-gray-600 dark:text-gray-300 break-words">{{ $user->email }}</td>
+                          <td class="px-4 sm:px-6 py-3 text-center">
                               @if ($user->is_admin)
-                                  <span class="px-3 py-1 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-full">管理者</span>
+                                  <span class="inline-block px-3 py-1 text-xs sm:text-sm font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-700 dark:text-indigo-100 rounded-full">管理者</span>
                               @else
-                                  <span class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-600 rounded-full">一般</span>
+                                  <span class="inline-block px-3 py-1 text-xs sm:text-sm font-semibold bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-100 rounded-full">一般</span>
                               @endif
                           </td>
-                          <td class="px-6 py-4 text-right">
-                              <form action="{{ route('admin.users.toggle-admin', $user) }}" method="POST">
+                          <td class="px-4 sm:px-6 py-3 text-right">
+                              <form action="{{ route('admin.users.toggle-admin', $user) }}" method="POST" class="inline-block">
                                   @csrf
                                   <button type="submit"
-                                      class="px-4 py-2 rounded-lg text-white text-sm font-medium 
-                                             {{ $user->is_admin ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600' }}">
+                                      class="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-white text-xs sm:text-sm font-medium 
+                                             {{ $user->is_admin ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600' }}
+                                             transition-all duration-300">
                                       {{ $user->is_admin ? '一般ユーザーに設定' : '管理者に設定' }}
                                   </button>
                               </form>

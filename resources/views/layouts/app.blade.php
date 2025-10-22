@@ -18,8 +18,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="icon" href="{{ asset('images/ielog-icon.svg') }}" type="image/svg+xml">
-    <title>{{ config('app.name', 'IeLog') }}</title>
+    <link rel="icon" href="{{ asset('images/MochiLog-icon.svg') }}" type="image/svg+xml">
+    <title>{{ config('app.name', 'もちログ') }}</title>
 
     <!-- 🖋 フォント -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -59,8 +59,8 @@
                 
                 <!-- 左側：ロゴ -->
                 <div class="flex items-center space-x-2">
-                    <img src="{{ asset('images/ielog-icon.svg') }}" alt="IeLog Icon" class="w-8 h-8">
-                    <span class="text-xl font-bold text-brand-primary">IeLog</span>
+                    <img src="{{ asset('images/MochiLog-icon.svg') }}" alt="MochiLog Icon" class="w-8 h-8">
+                    <span class="text-xl font-bold text-brand-primary">MochiLog</span>
                 </div>
 
                 <!-- 右側：操作ボタン群 -->
@@ -123,7 +123,7 @@
 
                 {{-- 📌 フッター --}}
         <footer class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            © {{ date('Y') }} IeLog.
+            © {{ date('Y') }} もちログ.
         </footer>
     </div>
 

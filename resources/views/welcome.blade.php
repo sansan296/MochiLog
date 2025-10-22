@@ -151,7 +151,7 @@
 
 <body>
   <!-- 🌱 ロゴ -->
-  <img src="images/ielog-icon.svg" alt="IeLog ロゴ" class="logo">
+  <img src="images/MochiLog-icon.svg" alt="もちログ ロゴ" class="logo">
 
   <!-- 💫 背景GIF（流れる） -->
   <img src="images/your-bg.gif" alt="背景アニメーション" class="moving-gif">
