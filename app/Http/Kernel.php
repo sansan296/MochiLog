@@ -60,7 +60,7 @@ class Kernel extends HttpKernel
         // ✅ 共通管理者パスワード認証ミドルウェア（今回追加）
         'admin.access' => \App\Http\Middleware\AdminAccess::class,
 
-        'admin.verified' => \App\Http\Middleware\VerifyAdminAccess::class,
+        //'admin.verified' => \App\Http\Middleware\VerifyAdminAccess::class,
 
     ];
 }
