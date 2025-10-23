@@ -18,7 +18,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'もちログ') }}</title>
-    <link rel="icon" href="{{ asset('images/MochiLog-icon.svg') }}" type="image/svg+xml">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/mochilog_favicon_flower.svg') }}">
+
 
     <!-- 🖋 フォント -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -34,47 +35,40 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => lucide.createIcons());
     </script>
-
-    <!-- 💡 ダークモード保持 -->
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.store('theme', {
-                toggle() {
-                    this.dark = !this.dark;
-                    localStorage.setItem('darkMode', this.dark);
-                },
-                dark: localStorage.getItem('darkMode') === 'true'
-            });
-        });
-    </script>
 </head>
 
 <body class="font-sans antialiased bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <div class="min-h-screen flex flex-col">
+<div class="min-h-screen flex flex-col">
 
-        {{-- 🌐 ナビゲーションバー：フェードスライド版 --}}
+{{-- 🌐 ナビゲーションバー --}}
 <nav 
     x-data="{ darkMode: localStorage.getItem('theme') === 'dark' }"
     class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-50"
 >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
 
-        {{-- ⏰ 左：現在時刻 --}}
-        <div class="text-lg sm:text-2xl font-extrabold text-blue-600 tracking-widest drop-shadow"
-             x-data="{ time: '' }"
-             x-init="
-                setInterval(() => {
-                    const now = new Date();
-                    const h = String(now.getHours()).padStart(2, '0');
-                    const m = String(now.getMinutes()).padStart(2, '0');
-                    time = `${h}:${m}`;
-                }, 1000);
-             "
-             x-text="time"
-        ></div>
+        {{-- 🔷 左側：ロゴとアプリ名 --}}
+        <div class="flex items-center space-x-2">
+            <img src="{{ asset('images/mochilog_favicon_flower.svg') }}" alt="MochiLog" class="h-8 w-8">
+            <span class="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-wide">もちログ</span>
+        </div>
 
-        {{-- 🌟 右側ボタン群 --}}
-        <div class="flex items-center space-x-3 sm:space-x-4 relative">
+        {{-- 🌟 右側：時刻 + ダークモード + メニュー + ログアウト --}}
+        <div class="flex items-center space-x-4 sm:space-x-5">
+
+            {{-- ⏰ 現在時刻（右寄せ） --}}
+            <div class="text-lg sm:text-2xl font-extrabold text-blue-600 tracking-widest drop-shadow"
+                x-data="{ time: '' }"
+                x-init="
+                    setInterval(() => {
+                        const now = new Date();
+                        const h = String(now.getHours()).padStart(2, '0');
+                        const m = String(now.getMinutes()).padStart(2, '0');
+                        time = `${h}:${m}`;
+                    }, 1000);
+                "
+                x-text="time">
+            </div>
 
             {{-- 🌙 ダークモード切替 --}}
             <button 
@@ -94,7 +88,7 @@
                 </template>
             </button>
 
-            {{-- 🍔 ハンバーガーメニュー（フェード＋スライド） --}}
+            {{-- 🍔 メニュー --}}
             <div class="relative" x-data="{ open: false }">
                 <button 
                     @click="open = !open" 
@@ -104,7 +98,7 @@
                     <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
                 </button>
 
-                {{-- ドロップダウン（ガラス風） --}}
+                {{-- ドロップダウン --}}
                 <div 
                     x-show="open"
                     @click.away="open = false"
@@ -116,6 +110,7 @@
                     x-transition:leave-end="opacity-0 -translate-y-3 scale-95"
                     class="absolute right-0 mt-3 w-44 bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl border border-white/30 dark:border-gray-700 rounded-2xl shadow-xl py-3 z-50 origin-top-right"
                 >
+                    {{-- 📋 通常メニュー --}}
                     @foreach ([
                         ['route' => 'menu.index', 'icon' => 'grid', 'label' => 'メニュー'],
                         ['route' => 'settings.index', 'icon' => 'settings', 'label' => '設定'],
@@ -127,6 +122,16 @@
                             <span>{{ $item['label'] }}</span>
                         </a>
                     @endforeach
+
+                    {{-- 🚪 ログアウト --}}
+                    <form method="POST" action="{{ route('logout') }}" class="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                        @csrf
+                        <button type="submit"
+                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-800/40 rounded-lg transition">
+                            <i data-lucide="log-out" class="w-5 h-5"></i>
+                            <span>ログアウト</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -134,29 +139,28 @@
 </nav>
 
 
+{{-- 🧭 ページヘッダー --}}
+@isset($header)
+    <header class="bg-white dark:bg-gray-800 shadow">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            {{ $header }}
+        </div>
+    </header>
+@endisset
 
+{{-- 📄 メインコンテンツ --}}
+<main class="flex-1 bg-[#fdf4f4ff] dark:bg-gray-900 transition-colors duration-300">
+    {{ $slot }}
+</main>
 
-        {{-- 🧭 ページヘッダー --}}
-        @isset($header)
-            <header class="bg-white dark:bg-gray-800 shadow">
-                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    {{ $header }}
-                </div>
-            </header>
-        @endisset
+{{-- 📌 フッター --}}
+<footer class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+    © {{ date('Y') }} もちログ. 
+</footer>
 
-        {{-- 📄 メインコンテンツ --}}
-        <main class="flex-1 bg-[#fdf4f4ff] dark:bg-gray-900 transition-colors duration-300">
-            {{ $slot }}
-        </main>
+</div>
 
-        {{-- 📌 フッター --}}
-        <footer class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            © {{ date('Y') }} もちログ. All rights reserved.
-        </footer>
-    </div>
-
-    {{-- ✅ 各ページ固有スクリプト --}}
-    @stack('scripts')
+{{-- ✅ 各ページ固有スクリプト --}}
+@stack('scripts')
 </body>
 </html>

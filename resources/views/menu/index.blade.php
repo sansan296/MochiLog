@@ -49,14 +49,6 @@
       </div>
   @endif
 
-  {{-- 🔒 ログアウト --}}
-  <form method="POST" action="{{ route('logout') }}">
-      @csrf
-      <button type="submit"
-          class="bg-gray-800 text-white text-xs sm:text-lg px-3 sm:px-6 py-1 sm:py-3 rounded-full hover:bg-gray-900 active:scale-95 transition">
-        ログアウト
-      </button>
-  </form>
 </div>
 
 
