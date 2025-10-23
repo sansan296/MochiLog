@@ -36,6 +36,19 @@ use App\Http\Controllers\{
 // ====================================================================
 // 🌟 トップページ
 // ====================================================================
+
+// 🌸 ファビコン配信ルート（これを web.php の最上部、Route::get('/', ...); の上に追加）
+Route::get('/favicon.ico', function () {
+    return response()->file(public_path('favicon.ico'));
+});
+Route::get('/favicon.png', function () {
+    return response()->file(public_path('favicon.png'));
+});
+Route::get('/favicon.svg', function () {
+    return response()->file(public_path('favicon.svg'));
+});
+
+
 Route::get('/', fn() => view('welcome'));
 
 // 🌟 ログイン後：モード選択ページへリダイレクト
