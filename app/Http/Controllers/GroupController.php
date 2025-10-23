@@ -11,13 +11,10 @@ class GroupController extends Controller
 {
     /**
      * 🌈 グループ一覧を表示
-     * - ログインユーザーが作成したグループを一覧表示
      */
     public function index()
     {
-        $groups = Group::where('user_id', Auth::id())
-            ->orderByDesc('created_at')
-            ->get();
+        $groups = Group::where('user_id', Auth::id())->orderByDesc('created_at')->get();
 
         return view('groups.index', compact('groups'));
     }
@@ -27,9 +24,16 @@ class GroupController extends Controller
      */
     public function create()
     {
-        // 🧭 現在のモード（家庭用 / 企業用）をセッションから取得
-        $selectedMode = Session::get('mode', 'household');
+        // 🌟 現在のモードをセッションから取得
+        $selectedMode = session('mode');
 
+        if (!$selectedMode) {
+            return redirect()
+                ->route('mode.select')
+                ->with('error', 'モードを選択してください。');
+        }
+
+        // ⚙️ モードをビューに渡してフォームで表示のみ（編集不可）
         return view('groups.create', compact('selectedMode'));
     }
 
@@ -38,22 +42,27 @@ class GroupController extends Controller
      */
     public function store(Request $request)
     {
+        // 🌟 現在のモードをセッションから固定取得
+        $currentMode = session('mode');
+
+        if (!$currentMode) {
+            return redirect()
+                ->route('mode.select')
+                ->with('error', 'モードを選択してください。');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'mode' => 'required|in:household,company',
         ]);
 
-        // 💾 グループ作成
+        // ✅ モードをリクエストからではなく、セッション値で固定
         $group = Group::create([
             'user_id' => Auth::id(),
             'name'    => $validated['name'],
-            'mode'    => $validated['mode'],
+            'mode'    => $currentMode, // ← セッションモードを強制使用
         ]);
 
-        // 🧠 セッションに選択されたグループを保存（すぐ利用可能に）
-        Session::put('selected_group_id', $group->id);
-
-        // ⚡ Ajaxリクエストなら JSON を返す
+        // AjaxリクエストならJSONレスポンス
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
@@ -61,9 +70,8 @@ class GroupController extends Controller
             ]);
         }
 
-        // 📦 通常リダイレクト
         return redirect()
-            ->route('groups.index')
+            ->route('groups.select')
             ->with('success', 'グループを作成しました。');
     }
 
@@ -73,7 +81,6 @@ class GroupController extends Controller
     public function edit(Group $group)
     {
         $this->authorizeGroup($group);
-
         return view('groups.edit', compact('group'));
     }
 
@@ -86,14 +93,13 @@ class GroupController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'mode' => 'required|in:household,company',
         ]);
 
         $group->update($validated);
 
         return redirect()
             ->route('groups.index')
-            ->with('success', 'グループ情報を更新しました。');
+            ->with('success', 'グループ名を更新しました。');
     }
 
     /**
@@ -104,11 +110,6 @@ class GroupController extends Controller
         $this->authorizeGroup($group);
 
         $group->delete();
-
-        // 削除したグループが選択中ならセッションも消去
-        if (Session::get('selected_group_id') === $group->id) {
-            Session::forget('selected_group_id');
-        }
 
         return redirect()
             ->route('groups.index')
