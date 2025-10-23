@@ -191,19 +191,24 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // ====================================================================
-// 🌟 管理者専用ルート（共通パスワード認証）
+// 🌟 管理者専用ルート
 // ====================================================================
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->group(function () {
     Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
-    Route::post('/users/{user}/toggle-admin', [AdminController::class, 'toggleAdmin'])->name('users.toggle-admin');
     Route::put('/update-admin-password', [SettingsController::class, 'updateAdminPassword'])->name('password.update');
+    Route::post('/users/{user}/toggle-admin', [AdminController::class, 'toggleAdmin'])->name('users.toggle-admin');
+    Route::post('/toggle-self', [AdminController::class, 'toggleSelf'])->name('toggle.self'); // ✅ これを追加
 });
 
+
+
+
 // ====================================================================
-// 🧑‍💼 一般ユーザーが自分を管理者に昇格／降格
+// ⚙️ 管理者設定ページ（グループごとアクセス制限付き） ← ✅ ここに追加
 // ====================================================================
-Route::middleware('auth')->post('/admin/toggle-self', [AdminController::class, 'toggleSelf'])
-    ->name('admin.toggle.self');
+Route::middleware(['auth', 'is_admin', 'same_group'])->group(function () {
+    Route::get('/admin/settings', [AdminController::class, 'settings'])->name('admin.settings');
+});
 
 // ====================================================================
 // 📜 監査ログ（管理者専用）
@@ -217,6 +222,22 @@ Route::middleware(['auth', 'admin.access'])->group(function () {
 // ====================================================================
 Route::middleware(['auth'])->get('/admin/settings-dashboard', fn() => view('admin.dashboard'))
     ->name('admin.settings.dashboard');
+
+// ====================================================================
+// 🏠 管理者ダッシュボード（パスワードゲート通過後に表示）
+// ====================================================================
+Route::middleware(['auth', 'is_admin', 'same_group'])
+    ->get('/admin/dashboard', [App\Http\Controllers\AdminController::class, 'settings'])
+    ->name('admin.dashboard');
+
+// ✅ 管理者専用設定ページ
+Route::middleware(['auth', 'is_admin', 'same_group'])->group(function () {
+    Route::get('/admin/settings', [App\Http\Controllers\AdminController::class, 'settings'])
+        ->name('admin.settings');
+});
+
+
+
 
 // ====================================================================
 // 🌟 Laravel Breeze / Jetstream 認証ルート

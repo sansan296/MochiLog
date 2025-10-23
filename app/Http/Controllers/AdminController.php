@@ -37,24 +37,6 @@ class AdminController extends Controller
     }
 
     /**
-     * 🏠 管理者ダッシュボード（グループ選択必須）
-     */
-    public function dashboard()
-    {
-        $this->authorizeAdminAccess();
-
-        $groupId = session('selected_group_id');
-        if (!$groupId) {
-            return redirect()->route('group.select')->with('info', '先にグループを選択してください。');
-        }
-
-        // 現在のグループに所属するユーザーを一覧表示（例）
-        $users = User::where('group_id', $groupId)->orderBy('name')->get();
-
-        return view('admin.dashboard', compact('users'));
-    }
-
-    /**
      * 🚪 管理者ログアウト
      */
     public function logout(Request $request)
@@ -97,12 +79,21 @@ class AdminController extends Controller
         $this->authorizeAdminAccess();
 
         $groupId = session('selected_group_id');
+
         if (!$groupId) {
             return redirect()->route('group.select')
                 ->with('info', '先にグループを選択してください。');
         }
 
-        return view('admin.settings', compact('groupId'));
+        // ✅ group_id カラムが存在するか安全に確認
+        if (\Schema::hasColumn('users', 'group_id')) {
+            $users = User::where('group_id', $groupId)->orderBy('name')->get();
+        } else {
+            // ✅ 一時的な fallback（全ユーザー表示）
+            $users = User::orderBy('name')->get();
+        }
+
+        return view('admin.dashboard', compact('users', 'groupId'));
     }
 
     /**
@@ -125,6 +116,7 @@ class AdminController extends Controller
 
         return redirect()->back()->with('success', $msg);
     }
+
     /**
      * 🛡️ 管理者権限を強制チェック
      */

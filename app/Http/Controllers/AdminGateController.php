@@ -39,8 +39,11 @@ class AdminGateController extends Controller
             // 💡 ミドルウェアと合わせる
             session(['admin_authenticated' => true]);
 
-            return redirect()
-                ->route('admin.dashboard')
+            // ✅ ここを追加することでセッションを即時保存（リダイレクト時に失われない）
+            session()->save();
+
+            // ✅ route() ではなくURL指定に変更（admin.accessが有効なまま）
+            return redirect('/admin/dashboard')
                 ->with('success', '管理者認証に成功しました。');
         }
 
