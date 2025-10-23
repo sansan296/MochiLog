@@ -20,22 +20,40 @@
     x-init="setInterval(() => time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 1000)"
     class="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800"
   >
-    {{-- 🌟 上部バー --}}
-    <div class="flex justify-between sm:justify-between items-center w-full px-4 sm:px-10 py-3 sm:py-5 bg-white/80 backdrop-blur-md shadow-md">
-      
-      {{-- 🕒 現在時刻 --}}
-      <div class="text-lg sm:text-2xl font-extrabold text-blue-600 tracking-widest drop-shadow" x-text="time"></div>
+    {{-- 🌟 上部バー（右寄せ：グループ表示＋ログアウト） --}}
+      <div class="flex justify-end items-center w-full px-4 sm:px-10 py-3 sm:py-5 bg-white/80 backdrop-blur-md shadow-md space-x-4 sm:space-x-6">
 
+        {{-- 🏷 現在のグループ --}}
+        @php
+            $currentGroup = session('selected_group_id')
+                ? \App\Models\Group::find(session('selected_group_id'))
+                : null;
+        @endphp
+        @if($currentGroup)
+            <div class="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-pink-50 dark:from-gray-700 dark:to-gray-800 px-3 py-1 rounded-full border border-blue-100 dark:border-gray-600 text-sm sm:text-base">
+                <span class="text-gray-700 dark:text-gray-200 font-medium">
+                    🏷 {{ $currentGroup->name }}
+                    <span class="text-gray-500 dark:text-gray-400">
+                        （{{ $currentGroup->mode === 'household' ? '家庭用' : '企業用' }}）
+                    </span>
+                </span>
+                <a href="{{ route('group.select') }}"
+                    class="text-blue-600 dark:text-blue-400 hover:underline text-xs sm:text-sm">
+                    切り替え
+                </a>
+            </div>
+        @endif
 
-      {{-- 🔒 ログアウト --}}
-      <form method="POST" action="{{ route('logout') }}">
-        @csrf
-        <button type="submit"
-            class="bg-gray-800 text-white text-xs sm:text-lg px-3 sm:px-6 py-1 sm:py-3 rounded-full hover:bg-gray-900 active:scale-95 transition">
-          ログアウト
-        </button>
-      </form>
-    </div>
+  {{-- 🔒 ログアウト --}}
+  <form method="POST" action="{{ route('logout') }}">
+      @csrf
+      <button type="submit"
+          class="bg-gray-800 text-white text-xs sm:text-lg px-3 sm:px-6 py-1 sm:py-3 rounded-full hover:bg-gray-900 active:scale-95 transition">
+        ログアウト
+      </button>
+  </form>
+</div>
+
 
     {{-- 🧭 メイン --}}
     <main class="flex-1 flex flex-col items-center py-6 sm:py-12 px-4 sm:px-6">

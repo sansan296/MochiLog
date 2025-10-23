@@ -16,18 +16,19 @@ class SettingsController extends Controller
         $user = Auth::user();
 
         // ✅ グループ選択チェック
-        $groupId = session('selected_group_id');
-        if (!$groupId) {
-            return redirect()->route('group.select')
-                ->with('info', '先にグループを選択してください。');
-        }
+        // $groupId = session('selected_group_id');
+        // if (!$groupId) {
+        //     return redirect()->route('group.select')
+        //         ->with('info', '先にグループを選択してください。');
+        // }
 
-        // ✅ 自分の所属グループ以外はアクセス禁止
-        if ($user->group_id !== $groupId) {
-            abort(403, 'このグループの設定にアクセスする権限がありません。');
-        }
+        // // ✅ 自分の所属グループ以外はアクセス禁止
+        // if ($user->group_id !== $groupId) {
+        //     abort(403, 'このグループの設定にアクセスする権限がありません。');
+        // }
 
-        return view('settings.index', compact('user', 'groupId'));
+        //return view('settings.index', compact('user', 'groupId'));
+        return view('settings.index', compact('user'));
     }
 
     /**
@@ -36,15 +37,15 @@ class SettingsController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
-        $groupId = session('selected_group_id');
+        // $groupId = session('selected_group_id');
 
-        if (!$groupId) {
-            return redirect()->route('group.select')->with('info', '先にグループを選択してください。');
-        }
+        // if (!$groupId) {
+        //     return redirect()->route('group.select')->with('info', '先にグループを選択してください。');
+        // }
 
-        if ($user->group_id !== $groupId) {
-            abort(403, 'このグループの設定を変更する権限がありません。');
-        }
+        // if ($user->group_id !== $groupId) {
+        //     abort(403, 'このグループの設定を変更する権限がありません。');
+        // }
 
         // 入力検証
         $validated = $request->validate([

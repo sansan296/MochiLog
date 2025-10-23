@@ -84,8 +84,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/menu', fn() => view('menu.index'))->name('menu.index');
 
     // ⚙️ 設定
-    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
-    Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    Route::get('/settings', [SettingsController::class, 'index'])
+        ->name('settings.index')
+        ->middleware(['auth']);
+
+    Route::post('/settings/update', [SettingsController::class, 'update'])
+        ->name('settings.update')
+        ->middleware(['auth']);
+
+    Route::post('/settings/update-admin-password', [SettingsController::class, 'updateAdminPassword'])
+        ->name('settings.updateAdminPassword')
+        ->middleware(['auth', 'admin.access']);
+
 
     // 🏠 ダッシュボード
     Route::get('/dashboard/home', [DashboardController::class, 'home'])->name('dashboard.home');
