@@ -17,63 +17,61 @@ class ModeController extends Controller
     {
         $user = Auth::user();
 
-        // 現在のモード（セッション or プロフィール or household）
-        $currentMode = Session::get('mode');
-
-        if (!$currentMode) {
-            $currentMode = optional($user->profile)->user_type ?? 'household';
-        }
+        // 現在のモード（セッション → プロフィール → デフォルト household）
+        $currentMode = Session::get('mode')
+            ?? optional($user->profile)->user_type
+            ?? 'household';
 
         return view('mode.select', compact('currentMode'));
     }
 
     /**
      * 💾 モード選択の保存とリダイレクト
+     *
+     * 仕様：
+     * - 企業/家庭 いずれも、当該モードで所属グループがあれば /group/select、無ければ /groups/create
      */
     public function store(Request $request)
     {
-        // 🔍 バリデーション
+        // 🔍 バリデーション（UIは home / company を送る前提）
         $validated = $request->validate([
             'user_type' => 'required|in:home,company',
         ]);
 
-        // 🧠 内部的に household / enterprise に変換
+        // 🧠 内部モードに正規化（household / enterprise）
         $mode = $validated['user_type'] === 'home' ? 'household' : 'enterprise';
 
-        // 💾 セッションにモード保存
+        // 💾 セッションへ保存（既存選択はクリア）
         Session::put('mode', $mode);
-
-        // 🔄 モード切替時は選択グループをリセット
         Session::forget('selected_group_id');
 
-        // 👤 プロフィールにモードを保存
+        // 👤 プロフィールにも保存（初回は作成）
         $user = Auth::user();
-        if ($user) {
-            $profile = $user->profile()->firstOrCreate(['user_id' => $user->id]);
-            $profile->update(['user_type' => $mode]);
+        $profile = $user->profile()->firstOrCreate(['user_id' => $user->id]);
+        $profile->update(['user_type' => $mode]);
+
+        // ============================================
+        // 🧩 グループ存在チェック（作成者 or メンバー）
+        // ============================================
+        $hasGroup = Group::where('mode', $mode)
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('members', function ($qq) use ($user) {
+                      $qq->where('user_id', $user->id);
+                  });
+            })
+            ->exists();
+
+        // ✅ グループがある → 選択画面へ
+        if ($hasGroup) {
+            return redirect()
+                ->route('group.select')
+                ->with('success', ($mode === 'household' ? '家庭用' : '企業用') . 'モードを選択しました。グループを選択してください。');
         }
 
-        // ================================================
-        // 🧩 グループの存在チェック
-        // ================================================
-        if ($mode === 'enterprise') {
-            // 👥 所属グループを取得
-            $group = $user->groups()->first(); // belongsToMany(Group::class) 前提
-
-            if ($group) {
-                // ✅ グループが存在 → 企業ダッシュボードへ
-                Session::put('selected_group_id', $group->id);
-                return redirect()->route('company.dashboard')
-                    ->with('success', '企業モードを選択しました。グループ「' . $group->name . '」に参加中です。');
-            } else {
-                // 🚪 グループ未所属 → 作成ページへ
-                return redirect()->route('groups.create')
-                    ->with('info', '企業グループが見つかりません。新しいグループを作成してください。');
-            }
-        } else {
-            // 👨‍👩‍👧 家庭モード → 家庭ダッシュボードへ
-            return redirect()->route('home.dashboard')
-                ->with('success', '家庭用モードを選択しました。');
-        }
+        // 🚪 グループがない → 作成画面へ
+        return redirect()
+            ->route('groups.create')
+            ->with('info', ($mode === 'household' ? '家庭用' : '企業用') . 'グループがありません。新規作成してください。');
     }
 }

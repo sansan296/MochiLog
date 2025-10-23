@@ -10,16 +10,14 @@
           </a>
 
           {{-- 📘 中央タイトル --}}
-          <h2 class="flex-1 text-center font-semibold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
+          <h2 class="flex-1 text-center font-semibold text-2xl sm:text-3xl text-gray-800 dark:text-gray-100 leading-tight">
               グループを選択
           </h2>
 
-          {{-- 🪶 右のダミースペース（バランス用）--}}
+          {{-- 🪶 右のダミースペース（バランス用） --}}
           <div class="w-[140px] sm:w-[160px]"></div>
-
       </div>
   </x-slot>
-
 
   <div class="max-w-3xl mx-auto mt-10 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 transition-all duration-300"
        x-data="groupSelect({{ json_encode($groups) }}, '{{ $mode }}')">
@@ -31,7 +29,19 @@
           </div>
       </template>
 
-      <p class="text-gray-600 dark:text-gray-300 mb-8 text-center text-lg">
+      {{-- ✅ フラッシュメッセージ（サーバー側） --}}
+      @if(session('info'))
+          <div class="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg text-center">
+              {{ session('info') }}
+          </div>
+      @endif
+      @if(session('success'))
+          <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-center">
+              {{ session('success') }}
+          </div>
+      @endif
+
+      <p class="text-gray-600 dark:text-gray-300 mb-8 text-center text-lg leading-relaxed">
           管理・操作するグループを選択してください。<br>
           必要に応じて新しいグループも作成できます。
       </p>
@@ -70,7 +80,7 @@
            x-cloak>
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 relative"
                @click.outside="openModal = false">
-              <h3 class="text-xl font-semibold mb-4 text-center">新しいグループを作成</h3>
+              <h3 class="text-xl font-semibold mb-4 text-center text-gray-800 dark:text-gray-100">新しいグループを作成</h3>
 
               <form @submit.prevent="createGroup">
                   <div class="mb-4">
@@ -133,7 +143,7 @@
 
                           const data = await res.json();
 
-                          if (data.success) {
+                          if (data.success && data.group) {
                               this.groups.push(data.group);
                               this.message = `グループ「${data.group.name}」を作成しました。`;
                               this.openModal = false;

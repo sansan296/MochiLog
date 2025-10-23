@@ -10,31 +10,37 @@ class Group extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'name',
-        'mode',
+        'user_id', // 作成者
+        'name',    // グループ名
+        'mode',    // household / enterprise
     ];
 
+    // ==========================================================
+    // 🧩 リレーション定義
+    // ==========================================================
+
     /**
-     * 作成者（ユーザー）とのリレーション
+     * 🧑‍💼 グループ作成者（1対多：ユーザー1人が複数グループ作成可）
      */
-    public function user()
+    public function creator()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
-     * グループに属するユーザーたち（中間テーブル）
+     * 👥 グループに所属するすべてのユーザー（中間テーブル group_user 経由）
+     * - pivot: role (admin/member など)
+     * - timestamps: 参加日時管理
      */
-    public function members()
+    public function users()
     {
         return $this->belongsToMany(User::class, 'group_user')
-            ->withPivot('role')
-            ->withTimestamps();
+                    ->withPivot('role')
+                    ->withTimestamps();
     }
 
     /**
-     * グループに属するアイテム
+     * 📦 グループに属するアイテム（在庫）
      */
     public function items()
     {
@@ -42,7 +48,7 @@ class Group extends Model
     }
 
     /**
-     * グループに属するタグ
+     * 🏷 グループに属するタグ
      */
     public function tags()
     {
@@ -50,10 +56,38 @@ class Group extends Model
     }
 
     /**
-     * グループに属する食材
+     * 🥦 グループに属する食材
      */
     public function ingredients()
     {
         return $this->hasMany(Ingredient::class);
     }
+
+    // ==========================================================
+    // 🧠 ユーティリティメソッド
+    // ==========================================================
+
+    /**
+     * 現在のモードをわかりやすく取得
+     */
+    public function getModeLabelAttribute(): string
+    {
+        return $this->mode === 'enterprise' ? '企業用' : '家庭用';
+    }
+
+    /**
+     * 指定したユーザーがこのグループに所属しているか判定
+     */
+    public function hasMember($userId): bool
+    {
+        return $this->users()->where('user_id', $userId)->exists();
+    }
+
+    public function members()
+    {
+        return $this->belongsToMany(User::class, 'group_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
 }

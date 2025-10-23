@@ -35,7 +35,6 @@ class GroupController extends Controller
      */
     public function create()
     {
-        // 🌟 現在のモードをセッションから取得
         $selectedMode = Session::get('mode');
 
         if (!$selectedMode) {
@@ -44,7 +43,6 @@ class GroupController extends Controller
                 ->with('error', 'モードを選択してください。');
         }
 
-        // ⚙️ モードをフォームで表示のみ（編集不可）
         return view('groups.create', compact('selectedMode'));
     }
 
@@ -65,14 +63,17 @@ class GroupController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        // ✅ モードはセッション値を強制適用
+        // ✅ グループを作成
         $group = Group::create([
             'user_id' => Auth::id(),
             'name'    => $validated['name'],
             'mode'    => $currentMode,
         ]);
 
-        // 🎯 新しく作ったグループを自動選択状態にする
+        // ✅ 自分自身を group_user に自動登録
+        $group->members()->attach(Auth::id(), ['role' => 'admin']);
+
+        // ✅ 作成したグループを自動選択状態にする
         Session::put('selected_group_id', $group->id);
 
         // Ajaxリクエスト時（モーダル対応）
@@ -84,7 +85,7 @@ class GroupController extends Controller
             ]);
         }
 
-        // ✅ 作成後はメニュー画面へ
+        // 通常リクエスト時：メニュー画面へ
         return redirect()
             ->route('menu.index')
             ->with('success', "グループ「{$group->name}」を作成し、選択しました。");
@@ -124,7 +125,6 @@ class GroupController extends Controller
     {
         $this->authorizeGroup($group);
 
-        // 削除グループが現在選択中ならセッションから解除
         if (Session::get('selected_group_id') === $group->id) {
             Session::forget('selected_group_id');
         }
@@ -137,7 +137,7 @@ class GroupController extends Controller
     }
 
     /**
-     * 🛡️ 権限確認（他人や他モードのグループ操作防止）
+     * 🛡️ 権限確認
      */
     private function authorizeGroup(Group $group)
     {
