@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class ItemController extends Controller
 {
     /**
-     * 在庫一覧ページ
+     * 📦 在庫一覧ページ
      */
     public function index(Request $request)
     {
@@ -20,7 +20,7 @@ class ItemController extends Controller
             return redirect()->route('group.select')->with('info', '先にグループを選択してください。');
         }
 
-        // ✅ 基本クエリ
+        // ✅ 基本クエリ（選択グループに限定）
         $query = Item::with([
             'user',
             'tags',
@@ -60,13 +60,13 @@ class ItemController extends Controller
             $query->whereDate('expiration_date', '<=', $request->expiration_to);
         }
 
-        // ✅ 並び順：ピン付き→新しい順
+        // ✅ 並び順：ピン付き → 更新日降順
         $items = $query
             ->orderByDesc('pinned')
             ->orderBy('updated_at', 'desc')
             ->get();
 
-        // JSONリクエストならデータを返す（Alpine.jsなど）
+        // JSONレスポンス対応（Alpine.jsなど）
         if ($request->expectsJson()) {
             return response()->json($items);
         }
@@ -76,7 +76,7 @@ class ItemController extends Controller
     }
 
     /**
-     * 在庫登録フォーム表示
+     * ➕ 在庫登録フォーム
      */
     public function create()
     {
@@ -84,9 +84,7 @@ class ItemController extends Controller
     }
 
     /**
-     * 在庫登録処理
-     * - item_id を UUID で自動生成
-     * - group_id をセッションから紐付け
+     * 💾 在庫登録処理
      */
     public function store(Request $request)
     {
@@ -127,20 +125,18 @@ class ItemController extends Controller
     }
 
     /**
-     * 詳細ページ
+     * 🔍 詳細ページ
      */
     public function show($id)
     {
         $item = Item::with(['user', 'memos', 'tags'])->findOrFail($id);
-
-        // 所属グループ外アクセスを防止
         $this->authorizeGroupAccess($item);
 
         return view('items.show', compact('item'));
     }
 
     /**
-     * 編集ページ
+     * ✏️ 編集ページ
      */
     public function edit($id)
     {
@@ -158,7 +154,7 @@ class ItemController extends Controller
     }
 
     /**
-     * 在庫削除
+     * 🗑️ 在庫削除
      */
     public function destroy($id)
     {
@@ -171,7 +167,7 @@ class ItemController extends Controller
     }
 
     /**
-     * ピン切り替え（Ajax）
+     * 📌 ピン切り替え（Ajax対応）
      */
     public function togglePin(Item $item)
     {
@@ -184,7 +180,7 @@ class ItemController extends Controller
     }
 
     /**
-     * グループ権限チェック（他グループのデータを操作できないように）
+     * 🛡️ グループ権限チェック
      */
     private function authorizeGroupAccess(Item $item)
     {

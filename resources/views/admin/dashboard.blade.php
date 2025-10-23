@@ -72,15 +72,15 @@
                               @endif
                           </td>
                           <td class="px-4 sm:px-6 py-3 text-right">
-                              <form action="{{ route('admin.users.toggle-admin', $user) }}" method="POST" class="inline-block">
-                                  @csrf
-                                  <button type="submit"
-                                      class="w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-white text-xs sm:text-sm font-medium 
-                                             {{ $user->is_admin ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600' }}
-                                             transition-all duration-300">
-                                      {{ $user->is_admin ? '一般ユーザーに設定' : '管理者に設定' }}
-                                  </button>
-                              </form>
+                              <form method="POST" action="{{ route('admin.toggle.self') }}">
+                                @csrf
+                                <button type="submit"
+                                    class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                                        {{ auth()->user()->is_admin ? '一般ユーザーに戻す' : '管理者に設定' }}
+                                </button>
+                            </form>
+
+
                           </td>
                       </tr>
                   @endforeach

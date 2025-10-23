@@ -56,11 +56,6 @@
         <nav class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
 
-                {{-- 左側：ロゴとアプリ名 --}}
-                <div class="flex items-center space-x-2">
-                    <img src="{{ asset('images/MochiLog-icon.svg') }}" alt="MochiLog Icon" class="w-8 h-8">
-                    <span class="text-xl font-bold text-pink-600 dark:text-pink-400">MochiLog</span>
-                </div>
 
                 {{-- 中央：現在のグループ表示 --}}
                 @php

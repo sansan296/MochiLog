@@ -133,29 +133,7 @@
         @endif
       </section>
 
-      {{-- 📊 在庫サマリー --}}
-      <section class="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-lg border-l-4 sm:border-l-8 border-indigo-500 p-4 sm:p-6">
-        <h3 class="text-lg sm:text-2xl font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-2 mb-3 sm:mb-4">
-          📊 在庫サマリー
-        </h3>
-
-        <p class="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-4">※ 登録された家庭用在庫の概要を表示します。</p>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-          <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-xl p-4 sm:p-5 text-center shadow-sm">
-            <p class="text-2xl sm:text-3xl font-bold text-indigo-700 dark:text-indigo-200">{{ $totalItems ?? 0 }}</p>
-            <p class="text-gray-600 dark:text-gray-400 mt-1 text-xs sm:text-base">総商品数</p>
-          </div>
-          <div class="bg-green-50 dark:bg-green-900/30 rounded-xl p-4 sm:p-5 text-center shadow-sm">
-            <p class="text-2xl sm:text-3xl font-bold text-green-700 dark:text-green-200">{{ $activeItems ?? 0 }}</p>
-            <p class="text-gray-600 dark:text-gray-400 mt-1 text-xs sm:text-base">使用可能在庫</p>
-          </div>
-          <div class="bg-red-50 dark:bg-red-900/30 rounded-xl p-4 sm:p-5 text-center shadow-sm">
-            <p class="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-300">{{ $expiredItems->count() }}</p>
-            <p class="text-gray-600 dark:text-gray-400 mt-1 text-xs sm:text-base">期限切れ在庫</p>
-          </div>
-        </div>
-      </section>
+      
     </div>
   </div>
 </x-app-layout>

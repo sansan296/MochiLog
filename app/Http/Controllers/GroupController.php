@@ -10,13 +10,24 @@ use App\Models\Group;
 class GroupController extends Controller
 {
     /**
-     * 🌈 グループ一覧を表示
+     * 🌈 グループ一覧を表示（現在のモードに応じてフィルタ）
      */
     public function index()
     {
-        $groups = Group::where('user_id', Auth::id())->orderByDesc('created_at')->get();
+        $userId = Auth::id();
+        $currentMode = Session::get('mode', 'household');
 
-        return view('groups.index', compact('groups'));
+        // 現在のモードに対応するグループのみ表示
+        $groups = Group::where('user_id', $userId)
+            ->where('mode', $currentMode)
+            ->orderByDesc('created_at')
+            ->get();
+
+        // 現在選択中のグループ
+        $selectedGroupId = Session::get('selected_group_id');
+        $selectedGroup = $selectedGroupId ? Group::find($selectedGroupId) : null;
+
+        return view('groups.index', compact('groups', 'currentMode', 'selectedGroup'));
     }
 
     /**
@@ -25,7 +36,7 @@ class GroupController extends Controller
     public function create()
     {
         // 🌟 現在のモードをセッションから取得
-        $selectedMode = session('mode');
+        $selectedMode = Session::get('mode');
 
         if (!$selectedMode) {
             return redirect()
@@ -33,7 +44,7 @@ class GroupController extends Controller
                 ->with('error', 'モードを選択してください。');
         }
 
-        // ⚙️ モードをビューに渡してフォームで表示のみ（編集不可）
+        // ⚙️ モードをフォームで表示のみ（編集不可）
         return view('groups.create', compact('selectedMode'));
     }
 
@@ -42,8 +53,7 @@ class GroupController extends Controller
      */
     public function store(Request $request)
     {
-        // 🌟 現在のモードをセッションから固定取得
-        $currentMode = session('mode');
+        $currentMode = Session::get('mode');
 
         if (!$currentMode) {
             return redirect()
@@ -55,24 +65,29 @@ class GroupController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        // ✅ モードをリクエストからではなく、セッション値で固定
+        // ✅ モードはセッション値を強制適用
         $group = Group::create([
             'user_id' => Auth::id(),
             'name'    => $validated['name'],
-            'mode'    => $currentMode, // ← セッションモードを強制使用
+            'mode'    => $currentMode,
         ]);
 
-        // AjaxリクエストならJSONレスポンス
+        // 🎯 新しく作ったグループを自動選択状態にする
+        Session::put('selected_group_id', $group->id);
+
+        // Ajaxリクエスト時（モーダル対応）
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'group'   => $group,
+                'message' => "グループ「{$group->name}」を作成しました。",
             ]);
         }
 
+        // ✅ 作成後はメニュー画面へ
         return redirect()
-            ->route('groups.select')
-            ->with('success', 'グループを作成しました。');
+            ->route('menu.index')
+            ->with('success', "グループ「{$group->name}」を作成し、選択しました。");
     }
 
     /**
@@ -109,6 +124,11 @@ class GroupController extends Controller
     {
         $this->authorizeGroup($group);
 
+        // 削除グループが現在選択中ならセッションから解除
+        if (Session::get('selected_group_id') === $group->id) {
+            Session::forget('selected_group_id');
+        }
+
         $group->delete();
 
         return redirect()
@@ -117,11 +137,12 @@ class GroupController extends Controller
     }
 
     /**
-     * 🛡️ 権限確認（他人のグループ操作防止）
+     * 🛡️ 権限確認（他人や他モードのグループ操作防止）
      */
     private function authorizeGroup(Group $group)
     {
-        if ($group->user_id !== Auth::id()) {
+        $currentMode = Session::get('mode');
+        if ($group->user_id !== Auth::id() || $group->mode !== $currentMode) {
             abort(403, 'このグループを操作する権限がありません。');
         }
     }

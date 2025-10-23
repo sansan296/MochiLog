@@ -55,7 +55,6 @@ Route::middleware(['auth'])->group(function () {
 // 🌟 グループ関連（家庭用・企業用を分けたチーム管理）
 // ====================================================================
 Route::middleware(['auth'])->group(function () {
-    // グループ基本操作
     Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
     Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
     Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
@@ -63,7 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
     Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
 
-   // グループ選択（モード選択後に表示）
+    // グループ選択（モード選択後に表示）
     Route::get('/group/select', [GroupSelectionController::class, 'select'])->name('group.select');
     Route::post('/group/set', [GroupSelectionController::class, 'set'])->name('group.set');
 
@@ -81,7 +80,6 @@ Route::middleware(['auth'])->group(function () {
 // 🌟 一般ユーザー用ルート群
 // ====================================================================
 Route::middleware(['auth'])->group(function () {
-
     // 🧭 メニュー
     Route::get('/menu', fn() => view('menu.index'))->name('menu.index');
 
@@ -111,6 +109,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/calendar/events/{event}/complete', [CalendarEventController::class, 'complete'])->name('calendar.complete');
     Route::get('/calendar/history', [CalendarEventController::class, 'history'])->name('calendar.history');
     Route::get('/calendar/date', [CalendarEventController::class, 'getByDate'])->name('calendar.byDate');
+
+    // 📊 在庫CSV（⚙️ 管理者はCSV管理ページ、一般ユーザーはエラーページ）
+    Route::get('/items/csv', [InventoryCsvController::class, 'index'])->name('items.csv.index');
+    Route::post('/items/csv/export', [InventoryCsvController::class, 'export'])->name('items.csv.export');
+    Route::post('/items/csv/import', [InventoryCsvController::class, 'import'])->name('items.csv.import');
+    Route::get('/items/csv/template', [InventoryCsvController::class, 'template'])->name('items.csv.template');
 
     // 📦 在庫（Item）
     Route::resource('items', ItemController::class);
@@ -143,16 +147,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/profile/view', [ProfileController::class, 'show'])->name('profile.view');
-});
 
-// ====================================================================
-// 📊 CSVインポート・エクスポート（管理者専用）
-// ====================================================================
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/items/csv', [InventoryCsvController::class, 'index'])->name('items.csv.index');
-    Route::post('/items/csv/export', [InventoryCsvController::class, 'export'])->name('items.csv.export');
-    Route::post('/items/csv/import', [InventoryCsvController::class, 'import'])->name('items.csv.import');
-    Route::get('/items/csv/template', [InventoryCsvController::class, 'template'])->name('items.csv.template');
 });
 
 // ====================================================================
@@ -172,9 +167,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     Route::put('/update-admin-password', [SettingsController::class, 'updateAdminPassword'])->name('password.update');
 });
 
-Route::post('/settings/update-admin-password', [SettingsController::class, 'updateAdminPassword'])
-    ->middleware(['auth', 'admin.access'])
-    ->name('settings.updateAdminPassword');
+// ====================================================================
+// 🧑‍💼 一般ユーザーが自分自身を管理者に昇格／降格するルート
+// ====================================================================
+Route::middleware('auth')->post('/admin/toggle-self', [AdminController::class, 'toggleSelf'])
+    ->name('admin.toggle.self');
 
 // ====================================================================
 // 📜 監査ログ（管理者専用）
