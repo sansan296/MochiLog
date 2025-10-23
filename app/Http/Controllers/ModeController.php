@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use App\Models\Profile;
+use App\Models\Group;
 
 class ModeController extends Controller
 {
@@ -42,19 +43,37 @@ class ModeController extends Controller
         // 💾 セッションにモード保存
         Session::put('mode', $mode);
 
-        // 🔄 選択済みグループ情報をリセット（モード切替時の誤動作防止）
+        // 🔄 モード切替時は選択グループをリセット
         Session::forget('selected_group_id');
 
-        // 👤 プロフィールにも保存（初回設定 or 更新）
+        // 👤 プロフィールにモードを保存
         $user = Auth::user();
         if ($user) {
             $profile = $user->profile()->firstOrCreate(['user_id' => $user->id]);
             $profile->update(['user_type' => $mode]);
         }
 
-        // ✅ 次ステップ：グループ選択へ
-        return redirect()
-            ->route('group.select')
-            ->with('success', ($mode === 'household' ? '家庭用' : '企業用') . 'モードを選択しました。グループを選択してください。');
+        // ================================================
+        // 🧩 グループの存在チェック
+        // ================================================
+        if ($mode === 'enterprise') {
+            // 👥 所属グループを取得
+            $group = $user->groups()->first(); // belongsToMany(Group::class) 前提
+
+            if ($group) {
+                // ✅ グループが存在 → 企業ダッシュボードへ
+                Session::put('selected_group_id', $group->id);
+                return redirect()->route('company.dashboard')
+                    ->with('success', '企業モードを選択しました。グループ「' . $group->name . '」に参加中です。');
+            } else {
+                // 🚪 グループ未所属 → 作成ページへ
+                return redirect()->route('groups.create')
+                    ->with('info', '企業グループが見つかりません。新しいグループを作成してください。');
+            }
+        } else {
+            // 👨‍👩‍👧 家庭モード → 家庭ダッシュボードへ
+            return redirect()->route('home.dashboard')
+                ->with('success', '家庭用モードを選択しました。');
+        }
     }
 }

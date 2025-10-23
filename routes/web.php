@@ -29,7 +29,7 @@ use App\Http\Controllers\{
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-| 一般ユーザー・管理者・グループ・招待機能を含むルート定義
+| 一般ユーザー・管理者・グループ・招待機能を含むルート定義（完全版）
 |--------------------------------------------------------------------------
 */
 
@@ -52,7 +52,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // ====================================================================
-// 🌟 グループ関連（家庭用・企業用を分けたチーム管理）
+// 🌟 グループ関連（家庭用・企業用チーム管理）
 // ====================================================================
 Route::middleware(['auth'])->group(function () {
     Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
@@ -62,7 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
     Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
 
-    // グループ選択（モード選択後に表示）
+    // グループ選択（モード選択後）
     Route::get('/group/select', [GroupSelectionController::class, 'select'])->name('group.select');
     Route::post('/group/set', [GroupSelectionController::class, 'set'])->name('group.set');
 
@@ -77,30 +77,38 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // ====================================================================
+// 🌟 家庭・企業ダッシュボード（ModeControllerで参照）
+// ====================================================================
+Route::middleware(['auth'])->group(function () {
+    // 家庭モード
+    Route::get('/home/dashboard', [DashboardController::class, 'home'])
+        ->name('home.dashboard');
+
+    // 企業モード
+    Route::get('/company/dashboard', [DashboardController::class, 'company'])
+        ->name('company.dashboard');
+});
+
+
+// ====================================================================
 // 🌟 一般ユーザー用ルート群
 // ====================================================================
 Route::middleware(['auth'])->group(function () {
+
     // 🧭 メニュー
     Route::get('/menu', fn() => view('menu.index'))->name('menu.index');
 
     // ⚙️ 設定
-
-    Route::get('/settings', [SettingsController::class, 'index'])
-        ->name('settings.index')
-        ->middleware(['auth']);
-
-    Route::post('/settings/update', [SettingsController::class, 'update'])
-        ->name('settings.update')
-        ->middleware(['auth']);
-
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings/update', [SettingsController::class, 'update'])->name('settings.update');
     Route::post('/settings/update-admin-password', [SettingsController::class, 'updateAdminPassword'])
         ->name('settings.updateAdminPassword')
         ->middleware(['auth', 'admin.access']);
 
-
-    // 🏠 ダッシュボード
+    // 🏠 ダッシュボード（機能統合型）
     Route::get('/dashboard/home', [DashboardController::class, 'home'])->name('dashboard.home');
     Route::get('/dashboard/company', [DashboardController::class, 'company'])->name('dashboard.company');
+
 
     // 🍳 レシピ
     Route::get('/recipes', [RecipeController::class, 'index'])->name('recipes.index');
@@ -121,7 +129,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/calendar/history', [CalendarEventController::class, 'history'])->name('calendar.history');
     Route::get('/calendar/date', [CalendarEventController::class, 'getByDate'])->name('calendar.byDate');
 
-    // 📊 在庫CSV（⚙️ 管理者はCSV管理ページ、一般ユーザーはエラーページ）
+    // 📊 在庫CSV
     Route::get('/items/csv', [InventoryCsvController::class, 'index'])->name('items.csv.index');
     Route::post('/items/csv/export', [InventoryCsvController::class, 'export'])->name('items.csv.export');
     Route::post('/items/csv/import', [InventoryCsvController::class, 'import'])->name('items.csv.import');
@@ -151,14 +159,14 @@ Route::middleware(['auth'])->group(function () {
     // 🛒 購入リスト
     Route::get('/purchase-lists', [PurchaseListController::class, 'index'])->name('purchase_lists.index');
     Route::post('/purchase-lists', [PurchaseListController::class, 'store'])->name('purchase_lists.store');
-    Route::delete('/purchase-lists/{purchaseList}', [PurchaseListController::class, 'destroy'])->whereNumber('purchaseList')->name('purchase_lists.destroy');
+    Route::delete('/purchase-lists/{purchaseList}', [PurchaseListController::class, 'destroy'])
+        ->whereNumber('purchaseList')->name('purchase_lists.destroy');
 
     // 👤 プロフィール
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/profile/view', [ProfileController::class, 'show'])->name('profile.view');
-
 });
 
 // ====================================================================
@@ -179,7 +187,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
 });
 
 // ====================================================================
-// 🧑‍💼 一般ユーザーが自分自身を管理者に昇格／降格するルート
+// 🧑‍💼 一般ユーザーが自分を管理者に昇格／降格
 // ====================================================================
 Route::middleware('auth')->post('/admin/toggle-self', [AdminController::class, 'toggleSelf'])
     ->name('admin.toggle.self');
@@ -192,7 +200,7 @@ Route::middleware(['auth', 'admin.access'])->group(function () {
 });
 
 // ====================================================================
-// 🌟 旧ルート（互換性用、今後削除可）
+// 🌟 旧ルート（互換性用）
 // ====================================================================
 Route::middleware(['auth'])->get('/admin/settings-dashboard', fn() => view('admin.dashboard'))
     ->name('admin.settings.dashboard');
