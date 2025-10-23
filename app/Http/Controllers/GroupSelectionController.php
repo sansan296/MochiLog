@@ -3,57 +3,46 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use App\Models\Group;
 
 class GroupSelectionController extends Controller
 {
     /**
-     * 🌈 モード選択後に表示するグループ選択画面
+     * グループ選択画面を表示
      */
     public function select()
     {
-        $user = Auth::user();
-        $mode = Session::get('mode');
+        $groups = Group::where('user_id', Auth::id())->get();
 
-        // モードが未選択の場合はモード選択ページに戻す
-        if (!$mode) {
-            return redirect()->route('mode.select')->with('error', 'モードを選択してください。');
+        if ($groups->isEmpty()) {
+            return redirect()->route('groups.create')->with('info', 'まずはグループを作成してください。');
         }
 
-        // ログインユーザーのそのモードに属するグループを取得
-        $groups = Group::where('user_id', $user->id)
-            ->where('mode', $mode)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // 🌈 モードをセッションから取得（例: household / company）
+        $mode = Session::get('mode', 'household'); // デフォルトは家庭用
 
         return view('groups.select', compact('groups', 'mode'));
     }
 
     /**
-     * 💾 選択されたグループをセッションに保存
+     * 選択されたグループをセッションに保存
      */
-    public function choose(Request $request)
+    public function set(Request $request)
     {
         $validated = $request->validate([
             'group_id' => 'required|exists:groups,id',
         ]);
 
-        $group = Group::findOrFail($validated['group_id']);
+        // グループ選択をセッションに保存
+        session(['selected_group_id' => $validated['group_id']]);
 
-        // 🧩 ログインユーザーがそのグループの作成者であることを確認
-        if ($group->user_id !== Auth::id()) {
-            abort(403, 'このグループを選択する権限がありません。');
-        }
+        // グループを取得
+        $group = Group::find($validated['group_id']);
 
-        // 💾 セッションに保存
-        Session::put('group_id', $group->id);
-        Session::put('group_name', $group->name);
-
-        // ✅ 在庫一覧（items.index）へリダイレクト
         return redirect()
             ->route('items.index')
-            ->with('success', 'グループ「' . $group->name . '」を選択しました。');
+            ->with('success', "{$group->name}（" . ($group->mode === 'household' ? '家庭用' : '企業用') . "）を選択しました。");
     }
 }

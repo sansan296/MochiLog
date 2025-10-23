@@ -76,7 +76,7 @@
                                 （{{ $currentGroup->mode === 'household' ? '家庭用' : '企業用' }}）
                             </span>
                         </span>
-                        <a href="{{ route('groups.select') }}" 
+                        <a href="{{ route('group.select') }}"
                            class="text-blue-600 dark:text-blue-400 hover:underline text-xs">
                            切り替え
                         </a>
