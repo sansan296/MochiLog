@@ -1,18 +1,25 @@
 <x-app-layout>
   <x-slot name="header">
-      <div class="relative flex justify-center items-center">
+      <div class="flex justify-between items-center w-full relative">
+          
           {{-- 🔙 左上の戻るボタン --}}
           <a href="{{ route('mode.select') }}"
-             class="absolute left-0 flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">
+             class="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">
               <i data-lucide="arrow-left" class="w-5 h-5"></i>
               <span class="text-sm sm:text-base font-medium">モード選択に戻る</span>
           </a>
 
-          <h2 class="font-semibold text-2xl text-gray-800 dark:text-gray-100 leading-tight text-center w-full">
+          {{-- 📘 中央タイトル --}}
+          <h2 class="flex-1 text-center font-semibold text-2xl text-gray-800 dark:text-gray-100 leading-tight">
               グループを選択
           </h2>
+
+          {{-- 🪶 右のダミースペース（バランス用）--}}
+          <div class="w-[140px] sm:w-[160px]"></div>
+
       </div>
   </x-slot>
+
 
   <div class="max-w-3xl mx-auto mt-10 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 transition-all duration-300"
        x-data="groupSelect({{ json_encode($groups) }}, '{{ $mode }}')">
