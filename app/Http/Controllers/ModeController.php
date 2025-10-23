@@ -3,42 +3,37 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class ModeController extends Controller
 {
     /**
-     * モード選択画面を表示
+     * 🌈 モード選択画面を表示
      */
-    public function select()
+    public function index()
     {
         return view('mode.select');
     }
 
     /**
-     * モード選択の保存とリダイレクト
+     * 💾 モード選択の保存とリダイレクト
      */
     public function store(Request $request)
     {
-        $userType = $request->input('user_type');
+        // 🔍 バリデーション
+        $validated = $request->validate([
+            'user_type' => 'required|in:home,company',
+        ]);
 
-        // 🧠 home / company → household / enterprise に変換してセッション保存
-        if (in_array($userType, ['home', 'company'])) {
-            $mapped = $userType === 'home' ? 'household' : 'enterprise';
-            session(['mode' => $mapped]);
-        }
+        // 🧠 入力値を統一形式に変換（home → household）
+        $mode = $validated['user_type'] === 'home' ? 'household' : 'company';
 
-        // 🏠 家庭モード
-        if ($userType === 'home') {
-            return redirect()->route('dashboard.home')
-                ->with('status', '家庭モードでログインしました。');
-        }
-        // 🏢 企業モード
-        elseif ($userType === 'company') {
-            return redirect()->route('dashboard.company')
-                ->with('status', '企業モードでログインしました。');
-        }
+        // 💾 セッションに保存
+        Session::put('mode', $mode);
 
-        // ⚠️ 不正な入力
-        return redirect()->back()->with('error', '無効な選択です');
+        // ✅ グループ選択画面へリダイレクト
+        return redirect()
+            ->route('group.select')
+            ->with('success', ($mode === 'household' ? '家庭用' : '企業用') . 'モードを選択しました。グループを選んでください。');
     }
 }

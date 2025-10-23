@@ -5,19 +5,31 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Item;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class ItemController extends Controller
 {
+    /**
+     * 在庫一覧ページ
+     */
     public function index(Request $request)
     {
+        // ✅ グループ選択チェック
+        $groupId = session('selected_group_id');
+        if (!$groupId) {
+            return redirect()->route('group.select')->with('info', '先にグループを選択してください。');
+        }
+
+        // ✅ 基本クエリ
         $query = Item::with([
             'user',
-            'tags', // ✅ タグを常に読み込む
+            'tags',
             'memos' => function ($q) {
                 $q->latest()->with('user');
             },
         ])
-        ->where('quantity', '>', 0); // ✅ 数量が1以上の在庫のみ表示
+        ->where('group_id', $groupId)
+        ->where('quantity', '>', 0);
 
         // 🔍 商品名キーワード検索
         if ($request->filled('keyword')) {
@@ -48,13 +60,13 @@ class ItemController extends Controller
             $query->whereDate('expiration_date', '<=', $request->expiration_to);
         }
 
+        // ✅ 並び順：ピン付き→新しい順
         $items = $query
-            ->orderByDesc('pinned')  // ← ピン付き(true)を先に
-            ->orderBy('updated_at', 'desc') // 更新日が新しい順
+            ->orderByDesc('pinned')
+            ->orderBy('updated_at', 'desc')
             ->get();
 
-
-        // JSONリクエストならデータを返す
+        // JSONリクエストならデータを返す（Alpine.jsなど）
         if ($request->expectsJson()) {
             return response()->json($items);
         }
@@ -62,8 +74,6 @@ class ItemController extends Controller
         // 通常リクエストならBladeを表示
         return view('items.index');
     }
-
-
 
     /**
      * 在庫登録フォーム表示
@@ -76,6 +86,7 @@ class ItemController extends Controller
     /**
      * 在庫登録処理
      * - item_id を UUID で自動生成
+     * - group_id をセッションから紐付け
      */
     public function store(Request $request)
     {
@@ -87,8 +98,13 @@ class ItemController extends Controller
             'expiration_day' => 'nullable|integer|min:1|max:31',
         ]);
 
+        $groupId = session('selected_group_id');
+        if (!$groupId) {
+            return redirect()->route('group.select')->with('info', '先にグループを選択してください。');
+        }
+
         $item = new Item();
-        $item->item_id = (string) Str::uuid(); // ✅ UUID 自動生成
+        $item->item_id = (string) Str::uuid();
         $item->item = $validated['item'];
         $item->quantity = $validated['quantity'];
 
@@ -102,7 +118,8 @@ class ItemController extends Controller
             );
         }
 
-        $item->user_id = auth()->id();
+        $item->user_id = Auth::id();
+        $item->group_id = $groupId;
         $item->save();
 
         return redirect()->route('items.index')
@@ -115,6 +132,10 @@ class ItemController extends Controller
     public function show($id)
     {
         $item = Item::with(['user', 'memos', 'tags'])->findOrFail($id);
+
+        // 所属グループ外アクセスを防止
+        $this->authorizeGroupAccess($item);
+
         return view('items.show', compact('item'));
     }
 
@@ -124,6 +145,7 @@ class ItemController extends Controller
     public function edit($id)
     {
         $item = Item::with(['tags'])->findOrFail($id);
+        $this->authorizeGroupAccess($item);
 
         $expiration = ['year' => null, 'month' => null, 'day' => null];
         if ($item->expiration_date) {
@@ -141,6 +163,8 @@ class ItemController extends Controller
     public function destroy($id)
     {
         $item = Item::findOrFail($id);
+        $this->authorizeGroupAccess($item);
+
         $item->delete();
 
         return redirect()->route('items.index')->with('success', '在庫を削除しました。');
@@ -151,9 +175,22 @@ class ItemController extends Controller
      */
     public function togglePin(Item $item)
     {
+        $this->authorizeGroupAccess($item);
+
         $item->pinned = !$item->pinned;
         $item->save();
 
         return response()->json(['pinned' => $item->pinned]);
+    }
+
+    /**
+     * グループ権限チェック（他グループのデータを操作できないように）
+     */
+    private function authorizeGroupAccess(Item $item)
+    {
+        $currentGroupId = session('selected_group_id');
+        if ($item->group_id !== $currentGroupId) {
+            abort(403, 'この在庫データを操作する権限がありません。');
+        }
     }
 }
