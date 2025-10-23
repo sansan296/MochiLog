@@ -56,7 +56,7 @@
         {{-- 🌟 右側：時刻 + ダークモード + メニュー + ログアウト --}}
         <div class="flex items-center space-x-4 sm:space-x-5">
 
-            {{-- ⏰ 現在時刻（右寄せ） --}}
+            {{-- ⏰ 現在時刻 --}}
             <div class="text-lg sm:text-2xl font-extrabold text-blue-600 tracking-widest drop-shadow"
                 x-data="{ time: '' }"
                 x-init="
@@ -98,7 +98,7 @@
                     <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-200"></i>
                 </button>
 
-                {{-- ドロップダウン --}}
+                {{-- 📋 ドロップダウン --}}
                 <div 
                     x-show="open"
                     @click.away="open = false"
@@ -115,6 +115,7 @@
                         ['route' => 'menu.index', 'icon' => 'grid', 'label' => 'メニュー'],
                         ['route' => 'settings.index', 'icon' => 'settings', 'label' => '設定'],
                         ['route' => 'profile.view', 'icon' => 'user-circle', 'label' => 'プロフィール'],
+                        ['route' => 'groups.index', 'icon' => 'users', 'label' => 'グループ一覧'], {{-- ✅ ← 追加 --}}
                     ] as $item)
                         <a href="{{ route($item['route']) }}"
                            class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/70 rounded-lg transition">
@@ -137,6 +138,7 @@
         </div>
     </div>
 </nav>
+
 
 
 {{-- 🧭 ページヘッダー --}}
