@@ -7,7 +7,7 @@
         <div class="relative max-w-6xl mx-auto px-4">
             {{-- 🌙 タイトル（中央寄せ） --}}
             <h2 class="font-semibold text-xl sm:text-2xl text-gray-800 dark:text-gray-100 leading-tight text-center">
-                {{ __('作れる料理一覧') }}
+                {{ __('レシピ一覧') }}
             </h2>
 
             {{-- 🔖 ブックマーク一覧ページへのボタン（右上配置） --}}
