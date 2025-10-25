@@ -123,7 +123,7 @@
           </a>
 
           {{-- 監査ログ --}}
-          <a href="{{ route('audit-logs.index') }}" class="{{ $card }}">
+          <a href="{{ route('audit_logs.index') }}" class="{{ $card }}">
             <h3 class="{{ $title }} text-center">📜 監査ログ</h3>
             <p class="hidden sm:block {{ $desc }}">操作履歴を確認します。</p>
           </a>
