@@ -593,13 +593,15 @@ function tagFilter() {
     // -------------------------------
     openItemTagModal(id) {
       this.itemTagModal = { show: true, itemId: id, name: '', error: '' };
+      this.newTagName = '';
     },
+
 
     // -------------------------------
     // 🏷️ 商品タグ追加処理
     // -------------------------------
     async addTagToItem() {
-      const name = this.itemTagModal.name.trim();
+      const name = this.newTagName.trim(); // ← 修正！
       if (!name) {
         this.itemTagModal.error = 'タグ名を入力してください';
         return;
@@ -619,13 +621,14 @@ function tagFilter() {
         if (!res.ok || !data.success) throw new Error('追加に失敗しました');
 
         this.itemTagModal.show = false;
-        await this.fetchTags(); 
+        await this.fetchTags();
         await this.fetchItems();
       } catch (e) {
         this.itemTagModal.error = e.message;
         console.error(e);
       }
     },
+
 
     // -------------------------------
     // ⏰ 賞味期限関連
