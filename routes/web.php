@@ -142,7 +142,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/items/{item}/tags', [ItemTagController::class, 'index'])->name('items.tags.index');
     Route::post('/items/{item}/tags/toggle', [ItemTagController::class, 'toggle'])->name('items.tags.toggle');
 
-    // 🛒 購入リスト
+    // 🛒 購入予定品
     Route::resource('purchase_lists', PurchaseListController::class)->only(['index', 'store', 'destroy']);
 
     // 👤 プロフィール
