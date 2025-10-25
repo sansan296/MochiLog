@@ -32,54 +32,52 @@ class TagController extends Controller
      * ➕ タグ作成（全体 or 商品別）
      */
     public function store(Request $request)
-    {
-        $groupId = session('selected_group_id');
-        if (!$groupId) {
-            return response()->json(['error' => 'グループが選択されていません。'], 400);
+{
+    $groupId = session('selected_group_id');
+    if (!$groupId) {
+        return response()->json(['error' => 'グループが選択されていません。'], 400);
+    }
+
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'item_id' => 'nullable|integer|exists:items,id',
+    ]);
+
+    // ✅ 修正ポイント
+    if (isset($validated['item_id']) && !empty($validated['item_id'])) {
+        $item = Item::where('id', $validated['item_id'])
+            ->where('group_id', $groupId)
+            ->first();
+
+        if (!$item) {
+            return response()->json(['error' => '該当アイテムが見つかりません。'], 404);
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'item_id' => 'nullable|integer|exists:items,id',
-        ]);
-
-        if (!empty($validated['item_id'])) {
-            $item = Item::where('id', $validated['item_id'])
-                ->where('group_id', $groupId)
-                ->first();
-
-            if (!$item) {
-                return response()->json(['error' => '該当アイテムが見つかりません。'], 404);
-            }
-
-            // ✅ 商品に紐づくタグ登録（個別レコードを作る）
-            $tag = Tag::create([
-                'name' => $validated['name'],
-                'group_id' => $groupId,
-                'item_id' => $item->id, // ← この商品専用タグとして登録
-            ]);
-
-            // ✅ 紐付けを保存
-            $item->tags()->syncWithoutDetaching([$tag->id]);
-
-
-            return response()->json(['success' => true, 'tag' => $tag]);
-        }
-
-        // 全体タグの場合
-        $tag = Tag::firstOrCreate([
+        $tag = Tag::create([
             'name' => $validated['name'],
             'group_id' => $groupId,
-            'item_id' => null,
+            'item_id' => $item->id,
         ]);
 
+        $item->tags()->syncWithoutDetaching([$tag->id]);
         return response()->json(['success' => true, 'tag' => $tag]);
     }
 
+    // 全体タグの場合
+    $tag = Tag::firstOrCreate([
+        'name' => $validated['name'],
+        'group_id' => $groupId,
+        'item_id' => null,
+    ]);
+
+    return response()->json(['success' => true, 'tag' => $tag]);
+}
+
+
 
     /**
-     * ✏️ タグ名の更新（同一グループ限定）
-     */
+    * ✏️ タグ名の更新（同一グループ限定）
+    */
     public function update(Request $request, Tag $tag)
     {
         $groupId = session('selected_group_id');
@@ -94,11 +92,19 @@ class TagController extends Controller
 
         $validated = $request->validate(['name' => 'required|string|max:255']);
 
-        // ✅ 名前を更新
+        // ✅ 全体タグの場合 → 同名の item_id=null のみ更新
+        if ($tag->item_id === null) {
+            // 全体タグだけを変更
+            $tag->update(['name' => $validated['name']]);
+            return response()->json(['success' => true, 'tag' => $tag]);
+        }
+
+        // ✅ 商品専用タグの場合 → そのタグだけ変更
         $tag->update(['name' => $validated['name']]);
 
         return response()->json(['success' => true, 'tag' => $tag]);
     }
+
 
 
     /**
