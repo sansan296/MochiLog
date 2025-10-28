@@ -36,17 +36,17 @@ class RecipeController extends Controller
                 'recipes' => [],
                 'bookmarkedRecipeIds' => [],
                 'message' => 'このグループには在庫が登録されていません。',
+                'bookmarks' => collect(), // ✅ 空のコレクションでエラー防止
             ]);
         }
-
-        // DeepL API設定
-        $deeplUrl = env('DEEPL_API_URL', 'https://api-free.deepl.com/v2/translate');
-        $deeplKey = env('DEEPL_API_KEY');
 
         // -------------------------------------
         // 🌐 2. 在庫名を英語に翻訳（DeepL + グループ別キャッシュ）
         // -------------------------------------
+        $deeplUrl = env('DEEPL_API_URL', 'https://api-free.deepl.com/v2/translate');
+        $deeplKey = env('DEEPL_API_KEY');
         $translatedIngredients = [];
+
         foreach ($items as $ingredient) {
             $cacheKey = "deepl_en_{$groupId}_" . md5($ingredient);
             $translatedIngredients[] = Cache::remember($cacheKey, 86400, function () use ($ingredient, $deeplUrl, $deeplKey) {
@@ -128,14 +128,10 @@ class RecipeController extends Controller
         unset($recipe);
 
         // -------------------------------------
-        // ⭐ 5. ブックマーク済みレシピ（グループ単位）
+        // ⭐ 5. ブックマーク情報を取得
         // -------------------------------------
-        $bookmarkedRecipeIds = Auth::check()
-            ? RecipeBookmark::where('group_id', $groupId)
-                ->where('user_id', Auth::id())
-                ->pluck('recipe_id')
-                ->toArray()
-            : [];
+        $bookmarks = RecipeBookmark::where('user_id', Auth::id())->get();
+        $bookmarkedRecipeIds = $bookmarks->pluck('recipe_id')->toArray();
 
         // -------------------------------------
         // 🖥️ 6. ビューへ
@@ -143,6 +139,7 @@ class RecipeController extends Controller
         return view('recipes.index', [
             'recipes' => $recipes,
             'bookmarkedRecipeIds' => $bookmarkedRecipeIds,
+            'bookmarks' => $bookmarks,
             'message' => count($recipes) ? null : '該当するレシピが見つかりませんでした。',
         ]);
     }

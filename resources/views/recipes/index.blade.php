@@ -39,12 +39,17 @@
 
                             {{-- ★ ブックマークボタン（右下固定） --}}
                             <div class="absolute bottom-3 right-3">
-                                @php
-                                    $isBookmarked = in_array($recipe['id'], $bookmarkedRecipeIds ?? []);
-                                @endphp
+    @php
+        // ✅ 追加部分：このレシピIDに対応するブックマークを取得
+        $bookmark = $bookmarks->firstWhere('recipe_id', $recipe['id'] ?? null);
 
-                                @if($isBookmarked)
-                                    <form method="POST" action="{{ route('bookmarks.destroy', ['bookmark' => $bookmark->id]) }}">
+        // ✅ 既存の行（true/false 判定）
+        $isBookmarked = in_array($recipe['id'], $bookmarkedRecipeIds ?? []);
+    @endphp
+
+    @if($isBookmarked)
+        <form method="POST" action="{{ route('bookmarks.destroy', ['bookmark' => $bookmark->id]) }}">
+
                                         @csrf
                                         @method('DELETE')
                                             <button type="submit"
