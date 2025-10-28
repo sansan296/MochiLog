@@ -161,11 +161,12 @@ class ItemController extends Controller
     {
         $validated = $request->validate([
             'item' => 'required|string|max:255',
-            'quantity' => 'required|integer|min:0',
-            'expiration_year' => 'nullable|integer|min:2024|max:2100',
-            'expiration_month' => 'nullable|integer|min:1|max:12',
-            'expiration_day' => 'nullable|integer|min:1|max:31',
-        ]);
+        'quantity' => 'required|numeric|min:0', // ← integer → numeric に変更
+        'expiration_year' => 'nullable|numeric|min:2024|max:2100', // ← numeric に変更
+        'expiration_month' => 'nullable|numeric|min:1|max:12', // ← numeric に変更
+        'expiration_day' => 'nullable|numeric|min:1|max:31', // ← numeric に変更
+    ]);
+
 
         // ✅ グループ所属確認
         $currentGroupId = session('selected_group_id');

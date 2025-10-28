@@ -62,7 +62,7 @@ public function set(Request $request)
 
     // ✅ 確実にセッションに保存
     $request->session()->put('selected_group_id', $group->id);
-
+    $request->session()->save();
 
     // ✅ モードに応じてリダイレクト
     $redirectRoute = $group->mode === 'household'

@@ -199,3 +199,15 @@ Route::middleware(['auth'])->group(function () {
 // 🌟 Laravel Breeze / Jetstream 認証ルート
 // ====================================================================
 require __DIR__ . '/auth.php';
+
+
+// ====================================================================
+// 🧪 セッション状態確認（デバッグ用）
+// ====================================================================
+Route::get('/session-check', function () {
+    return response()->json([
+        'selected_group_id' => session('selected_group_id'),
+        'auth_user_id'      => optional(Auth::user())->id,
+    ]);
+})->middleware(['auth']);
+

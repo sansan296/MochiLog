@@ -9,24 +9,41 @@
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
       <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 text-gray-900">
+
+          {{-- 戻るリンク --}}
           <a href="{{ route('items.show', $item) }}" class="text-blue-500 hover:text-blue-700 mr-2">詳細に戻る</a>
+
+          {{-- 編集フォーム --}}
           <form method="POST" action="{{ route('items.update', $item) }}">
+            
+            @if ($errors->any())
+    <div class="mb-4 p-3 rounded-lg bg-red-50 border border-red-300 text-red-700 text-sm">
+        <p class="font-semibold mb-2">入力内容にエラーがあります：</p>
+        <ul class="list-disc pl-5 space-y-1">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+          
+          
             @csrf
             @method('PUT')
-              
-          <!-- 商品名 -->
-      <div class="mb-4">
-        <label for="item" class="block text-gray-800 text-sm font-bold mb-2">▼商品名</label>
-        <input type="text" name="item" id="item"
-              value="{{ $item->item }}"
-              class="w-1/4 shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-        @error('item')
-          <span class="text-red-500 text-xs italic">{{ $message }}</span>
-        @enderror
-      </div>    
 
+            {{-- 商品名 --}}
+            <div class="mb-4">
+              <label for="item" class="block text-gray-800 text-sm font-bold mb-2">▼商品名</label>
+              <input type="text" name="item" id="item"
+                     value="{{ old('item', $item->item) }}"
+                     class="w-1/4 shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              @error('item')
+                <span class="text-red-500 text-xs italic">{{ $message }}</span>
+              @enderror
+            </div>
 
-            <!-- 賞味期限-->
+            {{-- 賞味期限 --}}
             <div class="mb-4">
               <label class="block text-gray-800 text-sm font-bold mb-2">▼賞味期限</label>
               <div class="flex space-x-2">
@@ -40,20 +57,25 @@
                        value="{{ old('expiration_day', $expiration['day']) }}"
                        class="w-1/4 border rounded-lg py-2 px-3 text-gray-700 focus:outline-none">
               </div>
+            </div>
 
+            {{-- 個数 --}}
+            <div class="mb-4">
+              <label for="quantity" class="block text-gray-800 text-sm font-bold mb-2">▼個数</label>
+              <input type="number" name="quantity" id="quantity"
+                     value="{{ old('quantity', $item->quantity) }}"
+                     min="1"
+                     class="w-1/4 shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
 
-          <!-- 個数 -->
-      <div class="mb-4">
-        <label for="quantity" class="block text-gray-800 text-sm font-bold mb-2">▼個数</label>
-        <input type="number" name="quantity" id="quantity"
-              value="{{ old('quantity', $item->quantity) }}"
-              min="1"
-              class="w-1/4 shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-      </div>
-    </div>
+            {{-- 送信ボタン --}}
+            <button type="submit"
+                    class="bg-[#4973B5] text-white rounded-lg hover:bg-[#2C5BA5] font-bold py-2 px-4 focus:outline-none focus:shadow-outline">
+              変更
+            </button>
 
-          <button type="submit" class="bg-[#4973B5] text-white rounded-lg hover:bg-[#2C5BA5] font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">変更</button>
-         </form>
+          </form>
+
         </div>
       </div>
     </div>
