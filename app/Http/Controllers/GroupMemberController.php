@@ -30,8 +30,16 @@ class GroupMemberController extends Controller
     public function create(Group $group)
     {
         $this->authorizeGroup($group);
-        return view('groups.members.create', compact('group'));
+
+        $token = Str::uuid()->toString();
+
+        $joinUrl = route('group.invite.accept', ['token' => $token]);
+
+        return view('groups.members.create', compact('group', 'joinUrl'));
     }
+
+
+
 
     /**
      * メンバー追加処理
