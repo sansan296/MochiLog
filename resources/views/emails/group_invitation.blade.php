@@ -1,5 +1,5 @@
 @component('mail::message')
-# もちログ グループ招待のお知らせ
+# MilLog グループ招待のお知らせ
 
 {{ $invitation->inviter->name }} さんが、あなたを **{{ $invitation->group->name }}** に招待しました。
 

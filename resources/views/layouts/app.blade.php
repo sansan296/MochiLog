@@ -17,8 +17,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'もちログ') }}</title>
-    <link rel="icon" type="image/svg+xml" href="{{ asset('images/mochilog_favicon_flower.svg') }}">
+    <title>{{ config('app.name', 'MilLog') }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/MilLog_favicon_flower.svg') }}">
 
 
     <!-- 🖋 フォント -->
@@ -49,8 +49,8 @@
 
         {{-- 🔷 左側：ロゴとアプリ名 --}}
         <div class="flex items-center space-x-2">
-            <img src="{{ asset('images/mochilog_favicon_flower.svg') }}" alt="MochiLog" class="h-8 w-8">
-            <span class="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-wide">もちログ</span>
+            <img src="{{ asset('images/MilLog_favicon_flower.svg') }}" alt="MilLog" class="h-8 w-8">
+            <span class="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-wide">MilLog</span>
         </div>
 
         {{-- 🌟 右側：時刻 + ダークモード + メニュー + ログアウト --}}
@@ -99,41 +99,74 @@
                 </button>
 
                 {{-- 📋 ドロップダウン --}}
-                <div 
-                    x-show="open"
-                    @click.away="open = false"
-                    x-transition:enter="transition ease-out duration-300"
-                    x-transition:enter-start="opacity-0 -translate-y-3 scale-95"
-                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                    x-transition:leave="transition ease-in duration-200"
-                    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                    x-transition:leave-end="opacity-0 -translate-y-3 scale-95"
-                    class="absolute right-0 mt-3 w-44 bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl border border-white/30 dark:border-gray-700 rounded-2xl shadow-xl py-3 z-50 origin-top-right"
-                >
-                    {{-- 📋 通常メニュー --}}
-                    @foreach ([
-                        ['route' => 'menu.index', 'icon' => 'grid', 'label' => 'メニュー'],
-                        ['route' => 'settings.index', 'icon' => 'settings', 'label' => '設定'],
-                        ['route' => 'profile.view', 'icon' => 'user-circle', 'label' => 'プロフィール'],
-                        ['route' => 'groups.index', 'icon' => 'users', 'label' => 'グループ一覧'], {{-- ✅ ← 追加 --}}
-                    ] as $item)
-                        <a href="{{ route($item['route']) }}"
-                           class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/70 rounded-lg transition">
-                            <i data-lucide="{{ $item['icon'] }}" class="w-5 h-5"></i>
-                            <span>{{ $item['label'] }}</span>
-                        </a>
-                    @endforeach
+<div 
+    x-show="open"
+    @click.away="open = false"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 -translate-y-3 scale-95"
+    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+    x-transition:leave-end="opacity-0 -translate-y-3 scale-95"
+    class="absolute right-0 mt-3 w-44 bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl border border-white/30 dark:border-gray-700 rounded-2xl shadow-xl py-3 z-50 origin-top-right"
+>
+    @php
+        $currentGroupId = session('selected_group_id');
+    @endphp
 
-                    {{-- 🚪 ログアウト --}}
-                    <form method="POST" action="{{ route('logout') }}" class="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
-                        @csrf
-                        <button type="submit"
-                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-800/40 rounded-lg transition">
-                            <i data-lucide="log-out" class="w-5 h-5"></i>
-                            <span>ログアウト</span>
-                        </button>
-                    </form>
-                </div>
+    {{-- 🌸 メニュー一覧 --}}
+    <a href="{{ route('menu.index') }}"
+       class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/70 rounded-lg transition">
+        <i data-lucide="grid" class="w-5 h-5"></i>
+        <span>メニュー</span>
+    </a>
+
+    <a href="{{ route('settings.index') }}"
+       class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/70 rounded-lg transition">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+        <span>設定</span>
+    </a>
+
+    <a href="{{ route('profile.view') }}"
+       class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/70 rounded-lg transition">
+        <i data-lucide="user-circle" class="w-5 h-5"></i>
+        <span>プロフィール</span>
+    </a>
+
+    <a href="{{ route('groups.index') }}"
+       class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/70 rounded-lg transition">
+        <i data-lucide="users" class="w-5 h-5"></i>
+        <span>グループ一覧</span>
+    </a>
+
+    {{-- 👥 メンバー管理（←これが今回の追加） --}}
+    @if ($currentGroupId)
+        <a href="{{ route('group.members.index', ['group' => $currentGroupId]) }}"
+           class="flex items-start gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-gray-700/70 rounded-lg transition">
+            <i data-lucide="user-plus" class="w-5 h-5 text-indigo-600 dark:text-indigo-300"></i>
+            <div class="flex flex-col leading-tight">
+                <span class="font-semibold text-[13px] text-indigo-600 dark:text-indigo-300">メンバー管理</span>
+                <span class="text-[11px] text-gray-500 dark:text-gray-400">メンバー追加・削除</span>
+            </div>
+        </a>
+    @else
+        {{-- グループ未選択時のフォールバック（クリックしても何もしない見た目だけの表示） --}}
+        <div class="px-4 py-2 text-[11px] text-gray-400 dark:text-gray-500">
+            グループ未選択のため<br>メンバー管理は表示できません
+        </div>
+    @endif
+
+    {{-- 🚪 ログアウト --}}
+    <form method="POST" action="{{ route('logout') }}" class="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+        @csrf
+        <button type="submit"
+                class="w-full text-left flex items-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-800/40 rounded-lg transition">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+            <span>ログアウト</span>
+        </button>
+    </form>
+</div>
+
             </div>
         </div>
     </div>
@@ -157,7 +190,7 @@
 
 {{-- 📌 フッター --}}
 <footer class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-    © {{ date('Y') }} もちログ. 
+    © {{ date('Y') }} MilLog. 
 </footer>
 
 </div>

@@ -85,7 +85,7 @@
 
     {{-- フッター --}}
     <footer class="mt-10 text-gray-400 text-xs text-center">
-      © {{ date('Y') }} もちログ.
+      © {{ date('Y') }} MilLog.
     </footer>
   </div>
 </x-guest-layout>

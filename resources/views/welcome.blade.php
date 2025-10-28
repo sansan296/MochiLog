@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>もちログ - ようこそ</title>
+    <title>MilLog - ようこそ</title>
 
     <link rel="icon" href="{{ url('favicon.png') }}" type="image/png">
     @vite('resources/css/app.css')
@@ -53,7 +53,7 @@
             box-shadow: 0 8px 32px rgba(173, 135, 255, 0.15);
         }
 
-        /* 🌸 タイトル文字（もちログ） */
+        /* 🌸 タイトル文字（MilLog） */
         .logo-wrapper {
             position: absolute;
             top: 10vh; /* 画面上から少し下に */
@@ -84,7 +84,7 @@
 
     {{-- 🌸 タイトル文字（完全中央配置） --}}
     <div class="logo-wrapper">
-        <h1 class="logo-text">もちログ</h1>
+        <h1 class="logo-text">MilLog</h1>
     </div>
 
     {{-- 🌸 メインカード --}}
@@ -113,7 +113,7 @@
 
     {{-- 🌸 フッター --}}
     <footer class="absolute bottom-4 w-full text-center text-sm text-gray-600 fade-in">
-        © {{ date('Y') }} もちログ.
+        © {{ date('Y') }} MilLog.
     </footer>
 </body>
 </html>
