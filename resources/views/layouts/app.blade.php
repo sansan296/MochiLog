@@ -17,7 +17,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'もちログ') }}</title>
+    <title>{{ config('app.name', 'MilLog') }}</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/mochilog_favicon_flower.svg') }}">
 
 
@@ -50,7 +50,7 @@
         {{-- 🔷 左側：ロゴとアプリ名 --}}
         <div class="flex items-center space-x-2">
             <img src="{{ asset('images/mochilog_favicon_flower.svg') }}" alt="MochiLog" class="h-8 w-8">
-            <span class="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-wide">もちログ</span>
+            <span class="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-wide">MilLog</span>
         </div>
 
         {{-- 🌟 右側：時刻 + ダークモード + メニュー + ログアウト --}}
@@ -111,18 +111,27 @@
                     class="absolute right-0 mt-3 w-44 bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl border border-white/30 dark:border-gray-700 rounded-2xl shadow-xl py-3 z-50 origin-top-right"
                 >
                     {{-- 📋 通常メニュー --}}
+                    @php
+                        $groupId = session('selected_group_id');
+                    @endphp
+
                     @foreach ([
                         ['route' => 'menu.index', 'icon' => 'grid', 'label' => 'メニュー'],
                         ['route' => 'settings.index', 'icon' => 'settings', 'label' => '設定'],
                         ['route' => 'profile.view', 'icon' => 'user-circle', 'label' => 'プロフィール'],
-                        ['route' => 'groups.index', 'icon' => 'users', 'label' => 'グループ一覧'], {{-- ✅ ← 追加 --}}
+                        ['route' => 'groups.index', 'icon' => 'users', 'label' => 'グループ一覧'],
+
+                            $groupId ? ['route' => 'group.members.index', 'icon' => 'user-plus', 'label' => 'メンバー', 'params' => ['group' => $groupId]] : null,
                     ] as $item)
-                        <a href="{{ route($item['route']) }}"
-                           class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/70 rounded-lg transition">
-                            <i data-lucide="{{ $item['icon'] }}" class="w-5 h-5"></i>
-                            <span>{{ $item['label'] }}</span>
-                        </a>
+                        @if ($item)
+                            <a href="{{ route($item['route'], $item['params'] ?? []) }}"
+                            class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/70 rounded-lg transition">
+                                <i data-lucide="{{ $item['icon'] }}" class="w-5 h-5"></i>
+                                <span>{{ $item['label'] }}</span>
+                            </a>
+                        @endif
                     @endforeach
+
 
                     {{-- 🚪 ログアウト --}}
                     <form method="POST" action="{{ route('logout') }}" class="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
@@ -157,7 +166,7 @@
 
 {{-- 📌 フッター --}}
 <footer class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-    © {{ date('Y') }} もちログ. 
+    © MilLog. 
 </footer>
 
 </div>

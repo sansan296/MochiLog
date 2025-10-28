@@ -20,7 +20,7 @@ class GroupInvitationMail extends Mailable
 
     public function build()
     {
-        return $this->subject('【もちログ】グループへの招待が届きました')
+        return $this->subject('【MilLog】グループへの招待が届きました')
                     ->markdown('emails.group_invitation');
     }
 }
