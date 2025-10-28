@@ -150,7 +150,41 @@
       </a>
     </div>
   </form>
+
+  {{-- 🌸 検索結果サマリー（左寄せGlass風） --}}
+<div class="relative mb-8 overflow-hidden rounded-2xl shadow-lg
+            bg-gradient-to-r from-[#fce4ec]/80 via-[#f8bbd0]/80 to-[#f48fb1]/80
+            dark:from-gray-800/80 dark:via-gray-700/80 dark:to-gray-600/80
+            border border-white/30 backdrop-blur-md
+            text-gray-800 dark:text-gray-100
+            px-6 py-4 flex justify-start items-center gap-8
+            transition-all duration-500">
+
+  <div class="flex items-center gap-2 text-sm sm:text-base font-medium">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-pink-500 dark:text-pink-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
+    </svg>
+    <span>カード数：</span>
+    <span class="font-bold text-pink-600 dark:text-pink-300" x-text="hitCount"></span>
+    <span>件</span>
+  </div>
+
+  <div class="flex items-center gap-2 text-sm sm:text-base font-medium">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-500 dark:text-indigo-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 13h4v8H7v-8zm6-5h4v13h-4V8z" />
+    </svg>
+    <span>合計在庫個数：</span>
+    <span class="font-bold text-indigo-600 dark:text-indigo-300" x-text="totalQuantity"></span>
+    <span>個</span>
+  </div>
 </div>
+
+
+
+</div>
+
+
+
 
 
     {{-- 🏷️ タグ一覧 --}}
@@ -404,6 +438,8 @@ function tagFilter() {
     tags: [],
     items: [],
     filteredItems: [],
+    hitCount: 0,
+    totalQuantity: 0,
     selectedTags: [],
     createModal: false,
     newTagName: '',
@@ -437,24 +473,29 @@ function tagFilter() {
     // -------------------------------
     // 📦 アイテム一覧取得
     // -------------------------------
-    async fetchItems() {
-      try {
-        const params = window.location.search;
-        const url = `{{ route('items.index') }}${params ? params + '&' : '?'}t=${Date.now()}`;
-        const res = await fetch(url, {
-          headers: { 'Accept': 'application/json' }
-        });
-        if (!res.ok) throw new Error('アイテム取得失敗');
-        this.items = await res.json();
+   async fetchItems() {
+    try {
+      const params = window.location.search;
+      const url = `{{ route('items.index') }}${params ? params + '&' : '?'}t=${Date.now()}`;
+      const res = await fetch(url, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error('アイテム取得失敗');
 
-        // ✅ ピン優先の並び替え
-        this.filteredItems = this.items
-          .map(i => ({ ...i, fade_key: i.id }))
-          .sort((a, b) => (b.pinned ?? 0) - (a.pinned ?? 0));
-      } catch (e) {
-        console.error(e);
-      }
-    },
+      // ✅ データ受け取り拡張
+      const data = await res.json();
+      this.items = data.items;
+      this.hitCount = data.hit_count;
+      this.totalQuantity = data.total_quantity;
+
+      // ✅ ピン優先の並び替え
+      this.filteredItems = this.items
+        .map(i => ({ ...i, fade_key: i.id }))
+        .sort((a, b) => (b.pinned ?? 0) - (a.pinned ?? 0));
+    } catch (e) {
+      console.error(e);
+    }
+  },
 
 
     // -------------------------------

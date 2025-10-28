@@ -10,17 +10,15 @@ use Illuminate\Support\Facades\Auth;
 class ItemController extends Controller
 {
     /**
-     * 📦 在庫一覧ページ
-     */
-    public function index(Request $request)
+      * 📦 在庫一覧ページ
+      */
+        public function index(Request $request)
     {
-        // ✅ グループ選択チェック
         $groupId = session('selected_group_id');
         if (!$groupId) {
             return redirect()->route('group.select')->with('info', '先にグループを選択してください。');
         }
 
-        // ✅ 基本クエリ（選択グループに限定）
         $query = Item::with([
             'user',
             'tags',
@@ -31,28 +29,22 @@ class ItemController extends Controller
         ->where('group_id', $groupId)
         ->where('quantity', '>', 0);
 
-        // 🔍 商品名キーワード検索
+        // 🔍 検索条件
         if ($request->filled('keyword')) {
             $query->where('item', 'like', '%' . $request->keyword . '%');
         }
-
-        // 📦 在庫数範囲
         if ($request->filled('stock_min')) {
             $query->where('quantity', '>=', (int)$request->stock_min);
         }
         if ($request->filled('stock_max')) {
             $query->where('quantity', '<=', (int)$request->stock_max);
         }
-
-        // 🗓️ 更新日範囲
         if ($request->filled('updated_from')) {
             $query->whereDate('updated_at', '>=', $request->updated_from);
         }
         if ($request->filled('updated_to')) {
             $query->whereDate('updated_at', '<=', $request->updated_to);
         }
-
-        // ⏰ 賞味期限範囲
         if ($request->filled('expiration_from')) {
             $query->whereDate('expiration_date', '>=', $request->expiration_from);
         }
@@ -60,20 +52,29 @@ class ItemController extends Controller
             $query->whereDate('expiration_date', '<=', $request->expiration_to);
         }
 
-        // ✅ 並び順：ピン付き → 更新日降順
-        $items = $query
-            ->orderByDesc('pinned')
-            ->orderBy('updated_at', 'desc')
-            ->get();
+        // 並び順
+        $items = $query->orderByDesc('pinned')
+                    ->orderBy('updated_at', 'desc')
+                    ->get();
 
-        // JSONレスポンス対応（Alpine.jsなど）
+        // ✅ 集計を追加
+        $hitCount = $items->count();
+        $totalQuantity = $items->sum('quantity');
+
+        // ✅ JSONレスポンス対応（Alpine.js）
         if ($request->expectsJson()) {
-            return response()->json($items);
+            return response()->json([
+                'items' => $items,
+                'hit_count' => $hitCount,
+                'total_quantity' => $totalQuantity,
+            ]);
         }
 
-        // 通常リクエストならBladeを表示
-        return view('items.index');
+        // Blade表示用
+        return view('items.index', compact('items', 'hitCount', 'totalQuantity'));
     }
+
+
 
     /**
      * ➕ 在庫登録フォーム
