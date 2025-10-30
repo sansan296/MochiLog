@@ -8,7 +8,9 @@
 
 ## 📘 概要
 
-**MochiLog（MilLog）** は、在庫管理を「もっと楽しく・スマートに」するWebアプリです。  
+=======
+**MilLog（MilLog）** は、在庫管理を「もっと楽しく・スマートに」するWebアプリです。  
+>>>>>>> origin/main
 食材や備品などの在庫を登録・タグ付けし、在庫状況から作れるレシピを自動提案します。  
 家庭モード／企業モードを切り替えて、そこからさらにグループを作成することができます。(※現在は個人用のみ。今後グループメンバー追加機能実装予定)
 
@@ -48,7 +50,7 @@
 ## 🧱 ディレクトリ構成
 
 ```plaintext
-MochiLog/
+MilLog/
 ├── app/
 │   ├── Http/
 │   │   └── Controllers/
@@ -88,7 +90,7 @@ cp .env.example .env
 ```
 .env を編集して以下の項目を設定
 ```bash
-APP_NAME="MochiLog"
+APP_NAME="MilLog"
 APP_URL=http://localhost
 DB_CONNECTION=mysql
 DB_HOST=mysql
