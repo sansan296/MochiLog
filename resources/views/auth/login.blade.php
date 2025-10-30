@@ -2,7 +2,7 @@
   {{-- 💡 Jetstream デフォルト背景を打ち消す --}}
   <style>
     /* デフォルトの灰色背景をリセット */
-    body > div.min-h-screen {
+    body>div.min-h-screen {
       background: none !important;
     }
   </style>
@@ -37,9 +37,9 @@
         <div>
           <x-input-label for="email" :value="__('メールアドレス')" class="text-gray-700 dark:text-gray-300" />
           <x-text-input id="email"
-                        class="block mt-2 w-full rounded-lg border-gray-300 dark:border-gray-600 
-                               dark:bg-gray-700 dark:text-gray-100 focus:ring-indigo-400" 
-                        type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+            class="block mt-2 w-full rounded-lg border-gray-300 dark:border-gray-600 
+                               dark:bg-gray-700 dark:text-gray-100 focus:ring-indigo-400"
+            type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
           <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
@@ -47,36 +47,41 @@
         <div class="mt-5">
           <x-input-label for="password" :value="__('パスワード')" class="text-gray-700 dark:text-gray-300" />
           <x-text-input id="password"
-                        class="block mt-2 w-full rounded-lg border-gray-300 dark:border-gray-600 
+            class="block mt-2 w-full rounded-lg border-gray-300 dark:border-gray-600 
                                dark:bg-gray-700 dark:text-gray-100 focus:ring-indigo-400"
-                        type="password" name="password" required autocomplete="current-password" />
+            type="password" name="password" required autocomplete="current-password" />
           <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <!-- ボタン -->
-<div class="flex flex-col sm:flex-row items-center sm:items-end justify-between mt-6 gap-3">
-  @if (Route::has('password.request'))
-    <a class="text-sm text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition underline"
-       href="{{ route('password.request') }}">
-      {{ __('パスワードをお忘れですか？') }}
-    </a>
-  @endif
+        <div class="flex flex-col sm:flex-row items-center justify-between mt-6 gap-3">
+          @if (Route::has('password.request'))
+          <a class="text-sm text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition underline"
+            href="{{ route('password.request') }}">
+            {{ __('パスワードをお忘れですか？') }}
+          </a>
+          @endif
 
-  <x-primary-button 
-      class="w-2/3 sm:w-auto self-end sm:self-auto bg-indigo-500 hover:bg-indigo-600 
-             dark:bg-indigo-600 dark:hover:bg-indigo-500 
-             transition-all duration-300 transform hover:scale-[1.03]">
-    {{ __('ログイン') }}
-  </x-primary-button>
-</div>
+          <div class="w-full flex justify-end">
+            <x-primary-button
+              class="w-[80px] text-sm px-4 py-2 bg-indigo-500 hover:bg-indigo-600 
+               dark:bg-indigo-600 dark:hover:bg-indigo-500 
+               rounded-lg transition-all duration-300 transform hover:scale-[1.03]">
+              {{ __('ログイン') }}
+            </x-primary-button>
+          </div>
+        </div>
+
+
+
 
 
         <!-- 新規登録リンク -->
         <div class="text-center mt-6">
           <p class="text-sm text-gray-600 dark:text-gray-400">
             アカウントをお持ちでないですか？
-            <a href="{{ route('register') }}" 
-               class="text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold underline">
+            <a href="{{ route('register') }}"
+              class="text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold underline">
               新規登録はこちら
             </a>
           </p>
