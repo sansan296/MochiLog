@@ -54,21 +54,22 @@
         </div>
 
         <!-- ボタン -->
-        <div class="flex flex-col sm:flex-row items-center justify-between mt-6 gap-3">
-          @if (Route::has('password.request'))
-            <a class="text-sm text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition underline"
-               href="{{ route('password.request') }}">
-              {{ __('パスワードをお忘れですか？') }}
-            </a>
-          @endif
+<div class="flex flex-col sm:flex-row items-center sm:items-end justify-between mt-6 gap-3">
+  @if (Route::has('password.request'))
+    <a class="text-sm text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition underline"
+       href="{{ route('password.request') }}">
+      {{ __('パスワードをお忘れですか？') }}
+    </a>
+  @endif
 
-          <x-primary-button 
-              class="w-full sm:w-auto bg-indigo-500 hover:bg-indigo-600 
-                     dark:bg-indigo-600 dark:hover:bg-indigo-500 
-                     transition-all duration-300 transform hover:scale-[1.03]">
-            {{ __('ログイン') }}
-          </x-primary-button>
-        </div>
+  <x-primary-button 
+      class="w-2/3 sm:w-auto self-end sm:self-auto bg-indigo-500 hover:bg-indigo-600 
+             dark:bg-indigo-600 dark:hover:bg-indigo-500 
+             transition-all duration-300 transform hover:scale-[1.03]">
+    {{ __('ログイン') }}
+  </x-primary-button>
+</div>
+
 
         <!-- 新規登録リンク -->
         <div class="text-center mt-6">
@@ -85,7 +86,7 @@
 
     {{-- フッター --}}
     <footer class="mt-10 text-gray-400 text-xs text-center">
-      © {{ date('Y') }} MilLog.
+      ©MilLog.
     </footer>
   </div>
 </x-guest-layout>
