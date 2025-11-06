@@ -18,11 +18,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'MilLog') }}</title>
-<<<<<<< HEAD
+
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/mochilog_favicon_flower.svg') }}">
-=======
-    <link rel="icon" type="image/svg+xml" href="{{ asset('images/MilLog_favicon_flower.svg') }}">
->>>>>>> origin/main
+
 
 
     <!-- 🖋 フォント -->
@@ -53,11 +51,10 @@
 
         {{-- 🔷 左側：ロゴとアプリ名 --}}
         <div class="flex items-center space-x-2">
-<<<<<<< HEAD
-            <img src="{{ asset('images/mochilog_favicon_flower.svg') }}" alt="MochiLog" class="h-8 w-8">
-=======
-            <img src="{{ asset('images/MilLog_favicon_flower.svg') }}" alt="MilLog" class="h-8 w-8">
->>>>>>> origin/main
+
+
+            <img src="{{ asset('images/mochilog_favicon_flower.svg') }}" alt="MilLog" class="h-8 w-8">
+
             <span class="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-wide">MilLog</span>
         </div>
 
@@ -175,11 +172,9 @@
 
 {{-- 📌 フッター --}}
 <footer class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-<<<<<<< HEAD
+
     © MilLog. 
-=======
-    © {{ date('Y') }} MilLog. 
->>>>>>> origin/main
+
 </footer>
 
 </div>
