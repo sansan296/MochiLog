@@ -1,73 +1,82 @@
 <x-app-layout>
   <x-slot name="header">
-      <h2 class="text-xl font-semibold text-gray-800 dark:text-white text-center">メンバーを追加</h2>
+    <h2 class="text-xl font-semibold text-gray-800 dark:text-white text-center">メンバーを追加</h2>
   </x-slot>
 
   <div class="max-w-2xl mx-auto mt-10 bg-white dark:bg-gray-800 shadow rounded-2xl p-8">
-      <p class="mb-6 text-gray-700 dark:text-gray-300 text-center">
-          以下のボタンを押して、LINEでグループ招待リンクを共有してください。
-      </p>
+    <p class="mb-6 text-gray-700 dark:text-gray-300 text-center">
+      以下のボタンを押して、LINEでグループ招待リンクを共有してください。
+    </p>
 
-      <div class="text-center">
-          <button 
-              type="button"
-              onclick="window.open('https://line.me/R/share?text={{ urlencode($joinUrl) }}', '_blank')"
-              class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition-all duration-200">
-              📱 LINEでリンクを共有
-          </button>
-
-
-  <div class="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow">
-      <h3 class="text-lg font-semibold mb-4">{{ $group->name }}</h3>
-
-    {{-- ✅ 成功・エラーメッセージ --}}
-    @if (session('success'))
-      <div class="mb-4 bg-green-100 text-green-800 px-4 py-2 rounded-lg shadow">{{ session('success') }}</div>
-    @endif
-    @if (session('error'))
-      <div class="mb-4 bg-red-100 text-red-800 px-4 py-2 rounded-lg shadow">{{ session('error') }}</div>
-    @endif
-    @if (session('info'))
-      <div class="mb-4 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg shadow">{{ session('info') }}</div>
-    @endif
-
-    {{-- 📋 メンバー追加フォーム --}}
-    <form method="POST" action="{{ route('group.members.store', ['group' => $group->id]) }}"
-          class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 space-y-5">
-      @csrf
-
-      {{-- メールアドレス入力欄 --}}
-      <div>
-        <label for="email" class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-          招待するユーザーのメールアドレス
-        </label>
-        <input type="email"
-               name="email"
-               id="email"
-               required
-               class="w-full border rounded-lg px-3 py-2 text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring focus:ring-indigo-200 focus:border-indigo-400"
-               placeholder="example@example.com">
-        @error('email')
-          <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-        @enderror
-      </div>
-
-      {{-- 送信ボタン --}}
-      <div class="flex justify-end">
-        <button type="submit"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow transition">
-          <i data-lucide="send" class="w-4 h-4"></i>
-          送信
-        </button>
-      </div>
-    </form>
-
-    {{-- 🔙 戻るボタン --}}
-    <div class="mt-6 text-center">
-      <a href="{{ route('group.members.index', ['group' => $group->id]) }}"
-         class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">
-        ← メンバー一覧に戻る
-      </a>
-    </div>
+    <script>
+      function shareOnLine() {
+        const message = encodeURIComponent("📢 もちログに参加してね！👇\n" + "{{ $joinUrl }}");
+        const lineUrl = `https://line.me/R/msg/text/?${message}`;
+        window.open(lineUrl, '_blank');
+      }
+    </script>
+  <div class="text-center">
+    <button
+      type="button"
+      onclick="shareOnLine()"
+      class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition-all duration-200">
+      📱 LINEでリンクを共有
+    </button>
   </div>
+
+
+    <div class="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow">
+    <div class="text-center">  
+    <h3 class="text-lg font-semibold mb-4">{{ $group->name }}</h3>
+    </div>
+      {{-- ✅ 成功・エラーメッセージ --}}
+      @if (session('success'))
+      <div class="mb-4 bg-green-100 text-green-800 px-4 py-2 rounded-lg shadow">{{ session('success') }}</div>
+      @endif
+      @if (session('error'))
+      <div class="mb-4 bg-red-100 text-red-800 px-4 py-2 rounded-lg shadow">{{ session('error') }}</div>
+      @endif
+      @if (session('info'))
+      <div class="mb-4 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg shadow">{{ session('info') }}</div>
+      @endif
+
+      {{-- 📋 メンバー追加フォーム --}}
+      <form method="POST" action="{{ route('group.members.store', ['group' => $group->id]) }}"
+        class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 space-y-5">
+        @csrf
+
+        {{-- メールアドレス入力欄 --}}
+        <div>
+          <label for="email" class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            招待するユーザーのメールアドレス
+          </label>
+          <input type="email"
+            name="email"
+            id="email"
+            required
+            class="w-full border rounded-lg px-3 py-2 text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring focus:ring-indigo-200 focus:border-indigo-400"
+            placeholder="example@example.com">
+          @error('email')
+          <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+          @enderror
+        </div>
+
+        {{-- 送信ボタン --}}
+        <div class="flex justify-end">
+          <button type="submit"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow transition">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            送信
+          </button>
+        </div>
+      </form>
+
+      {{-- 🔙 戻るボタン --}}
+      <div class="mt-6 text-center">
+        <a href="{{ route('group.members.index', ['group' => $group->id]) }}"
+          class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">
+          ← メンバー一覧に戻る
+        </a>
+      </div>
+    </div>
 </x-app-layout>
