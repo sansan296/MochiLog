@@ -19,10 +19,15 @@ class GroupMemberController extends Controller
     public function index(Group $group)
     {
         $this->authorizeGroup($group);
-        $members = $group->members()->get();
+
+        // GroupMember モデルを通して取得し、Userを一括ロード
+        $members = $group->groupMembers()->with('user')->get();
 
         return view('groups.members.index', compact('group', 'members'));
     }
+
+
+
 
     /**
      * メンバー追加フォーム表示

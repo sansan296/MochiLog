@@ -35,8 +35,8 @@ class Group extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'group_user')
-                    ->withPivot('role')
-                    ->withTimestamps();
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     /**
@@ -85,9 +85,13 @@ class Group extends Model
 
     public function members()
     {
-        return $this->belongsToMany(User::class, 'group_user')
+        return $this->belongsToMany(User::class, 'group_members')
             ->withPivot('role')
             ->withTimestamps();
     }
 
+    public function groupMembers()
+    {
+        return $this->hasMany(GroupMember::class);
+    }
 }

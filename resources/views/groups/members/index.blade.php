@@ -3,12 +3,11 @@
       <h2 class="font-semibold text-xl text-gray-800 leading-tight text-center">
           メンバー一覧
       </h2>
-
   </x-slot>
 
   <div class="max-w-3xl mx-auto py-8 px-4">
 
-    {{-- ✅ 成功・エラー・情報メッセージ --}}
+    {{-- ✅ フラッシュメッセージ --}}
     @if (session('success'))
       <div class="mb-4 bg-green-100 text-green-800 px-4 py-2 rounded-lg shadow">{{ session('success') }}</div>
     @endif
@@ -37,8 +36,8 @@
             <p class="text-gray-500 dark:text-gray-400 text-xs">{{ $member->user->email ?? '不明なユーザー' }}</p>
           </div>
 
-          {{-- 🗑️ 削除ボタン（自分以外） --}}
-          @if (auth()->id() !== ($member->user->id ?? null))
+          {{-- 🗑️ 削除ボタン（自分以外のみ） --}}
+          @if ($member->user && auth()->id() !== $member->user->id)
             <form method="POST"
                   action="{{ route('group.members.destroy', ['group' => $group->id, 'user' => $member->user->id]) }}"
                   onsubmit="return confirm('本当に削除しますか？')">
@@ -56,6 +55,5 @@
         </div>
       @endforelse
     </div>
-
   </div>
 </x-app-layout>
