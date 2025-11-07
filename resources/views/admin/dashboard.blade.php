@@ -59,27 +59,37 @@
                         </td>
 
                         <td class="px-4 sm:px-6 py-3 text-center">
-                            {{-- ✅ 各ユーザーの状態に応じてボタンを切替 --}}
-                            <form method="POST"
-                                action="{{ $user->id === auth()->id() 
+                            @if ($user->is_admin)
+                            <button
+                                x-data
+                                @click.prevent="
+        fetch('{{ $user->id === auth()->id() 
           ? route('admin.toggle.self') 
-          : route('admin.toggle.user', ['user' => $user->id]) }}">
-                                @csrf
-
-                                @if ($user->is_admin)
-                                <button type="submit"
-                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold shadow transition">
-                                    一般ユーザーに戻す
-                                </button>
-                                @else
-                                <button type="submit"
-                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow transition">
-                                    管理者に設定
-                                </button>
-                                @endif
-                            </form>
-
+          : route('admin.toggle.user', ['user' => $user->id]) }}', {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        }).then(() => location.reload());
+      "
+                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold shadow transition">
+                                一般ユーザーに戻す
+                            </button>
+                            @else
+                            <button
+                                x-data
+                                @click.prevent="
+        fetch('{{ $user->id === auth()->id() 
+          ? route('admin.toggle.self') 
+          : route('admin.toggle.user', ['user' => $user->id]) }}', {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        }).then(() => location.reload());
+      "
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow transition">
+                                管理者に設定
+                            </button>
+                            @endif
                         </td>
+
                     </tr>
                     @endforeach
                 </tbody>
