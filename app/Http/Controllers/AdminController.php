@@ -39,15 +39,12 @@ class AdminController extends Controller
     }
 
     /**
-     * 🔄 管理者権限をトグル（自分の権限切替）
+     * 🔄 自分の権限を切り替える
      */
     public function toggleSelf(Request $request)
     {
         /** 
          * @var \App\Models\User $user 
-         * LaravelのAuth::user()は User|null を返すため、
-         * 静的解析ツール（Intelephense）に正しい型を明示。
-         * これにより「Undefined method 'save'」警告を抑止。
          */
         $user = Auth::user();
 
@@ -55,11 +52,38 @@ class AdminController extends Controller
             return back()->with('error', 'ログインしていません。もう一度ログインしてください。');
         }
 
-        // 管理者権限を切り替え（admin ⇄ 一般）
         $user->is_admin = !$user->is_admin;
         $user->save();
 
         $status = $user->is_admin ? '管理者' : '一般ユーザー';
-        return back()->with('success', "権限を「{$status}」に切り替えました。");
+        return back()->with('success', "あなたの権限を「{$status}」に切り替えました。");
+    }
+
+    /**
+     * 🧑‍🤝‍🧑 他人の権限を切り替える（誰でも実行可能）
+     */
+    public function toggleUser(Request $request, User $user)
+    {
+        $groupId = session('selected_group_id');
+
+        if (!$groupId) {
+            return back()->with('error', 'グループが選択されていません。');
+        }
+
+        // ✅ 同じグループのユーザーのみ切り替え可能
+        $isMember = GroupMember::where('group_id', $groupId)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if (!$isMember) {
+            return back()->with('error', 'このユーザーは選択中のグループに所属していません。');
+        }
+
+        // ✅ 権限をトグル（admin ⇄ 一般）
+        $user->is_admin = !$user->is_admin;
+        $user->save();
+
+        $status = $user->is_admin ? '管理者' : '一般ユーザー';
+        return back()->with('success', "{$user->name} さんを「{$status}」に設定しました。");
     }
 }

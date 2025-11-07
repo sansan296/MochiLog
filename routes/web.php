@@ -176,6 +176,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin.access'])->gr
     Route::post('/toggle-self', [AdminController::class, 'toggleSelf'])->name('toggle.self');
 });
 
+// ====================================================================
+// 🌟 権限トグル機能（全ユーザー共通で利用可能）
+// ====================================================================
+Route::middleware(['auth'])->group(function () {
+    Route::post('/admin/toggle-user/{user}', [AdminController::class, 'toggleUser'])
+        ->name('admin.toggle.user');
+});
+
 
 
 // ====================================================================
