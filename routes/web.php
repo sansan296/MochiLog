@@ -76,7 +76,8 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/group/invite/{token}', [GroupInvitationController::class, 'accept'])->name('group.invite.accept');
 });
 
-
+    Route::get('/invite/accept/{token}', [GroupInvitationController::class, 'accept'])->name('group.invite.accept');
+    Route::get('/invite/pending', [GroupInvitationController::class, 'handlePendingInvite'])->name('group.invite.pending');
 
 // ====================================================================
 // 🌟 ダッシュボード（家庭・企業）
