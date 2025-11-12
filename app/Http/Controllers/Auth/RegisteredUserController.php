@@ -51,22 +51,25 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         // ✅ 招待トークンがある場合は自動承認
+        // ✅ 招待トークンがある場合は自動承認
         if (session('pending_invite_token')) {
-            $token = session('pending_invite_token');
+            $token = session()->pull('pending_invite_token'); // ← セッションから取り出して削除
 
             $invitation = GroupInvitation::where('token', $token)->first();
 
             if ($invitation && !$invitation->accepted) {
-                // グループに自動参加
-                $invitation->group->members()->attach($user->id, ['role' => 'member']);
+                $group = $invitation->group; // ✅ 関連モデル経由でグループ取得
 
-                // 招待を承認済みに変更
-                $invitation->update(['accepted' => true]);
+                if ($group && !$group->members()->where('user_id', $user->id)->exists()) {
+                    // グループに自動参加
+                    $group->members()->attach($user->id, ['role' => 'member']);
 
-                // セッションからトークン削除
-                session()->forget('pending_invite_token');
+                    // 招待を承認済みに変更
+                    $invitation->update(['accepted' => true]);
+                }
             }
         }
+
 
         // ✅ 登録後はモード選択またはグループ選択ページへ誘導
         return redirect()->route('mode.select')
