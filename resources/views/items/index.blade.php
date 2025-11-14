@@ -187,28 +187,115 @@
 
 
 
-    {{-- 🏷️ タグ一覧 --}}
-        <div class="mb-8 bg-white shadow-md rounded-2xl p-4">
-      <div class="flex items-center flex-wrap gap-2 mb-3">
-        <template x-for="tag in tags" :key="tag.id">
-          <button
-            type="button"
-            class="px-3 py-1 rounded-full border text-sm transition-all duration-300"
-            :class="selectedTags.includes(tag.id)
-              ? 'bg-indigo-600 text-white border-indigo-600'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-            x-text="tag.name"
-            @click="toggleTagFilter(tag.id)"
-            @contextmenu.stop.prevent="openTagContextMenu($event, tag)">
-          </button>
-        </template>
+    {{-- 🏷️ タグ一覧（スマホ対応版） --}}
+<div class="mb-8 bg-white shadow-md rounded-2xl p-4">
+  <div class="flex items-center flex-wrap gap-2 mb-3">
+    <template x-for="tag in tags" :key="tag.id">
+      <button
+        type="button"
+        class="px-3 py-1 rounded-full border text-sm transition-all duration-300"
+        :class="selectedTags.includes(tag.id)
+          ? 'bg-indigo-600 text-white border-indigo-600'
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+        x-text="tag.name"
+        @click="handleTagTap(tag, $event)"
+        @contextmenu.stop.prevent="openTagContextMenu($event, tag)">
+      </button>
+    </template>
 
-        <button type="button"
-                class="px-3 py-1 rounded-full border text-sm bg-indigo-600 text-white hover:bg-indigo-700"
-                @click="openCreateModal()">＋</button>
-      </div>
-      <p class="text-sm text-gray-500">タグをクリックして在庫を絞り込みできます（複数選択可）</p>
+    <button type="button"
+            class="px-3 py-1 rounded-full border text-sm bg-indigo-600 text-white hover:bg-indigo-700"
+            @click="openCreateModal()">＋</button>
+  </div>
+  <p class="text-sm text-gray-500">タグをクリック（スマホでは長押し）して編集や削除ができます</p>
+</div>
+
+
+<!-- 🏷️ スマホ用タグメニュー（下部シート） -->
+<div x-show="mobileTagMenu.show" x-cloak
+     class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end justify-center z-50"
+     @click.self="mobileTagMenu.show = false">
+  <div class="bg-white rounded-t-3xl shadow-2xl w-full max-w-md p-6 animate-[fadeInUp_0.3s_ease-out]">
+    <h3 class="text-lg font-semibold mb-3 text-gray-800 text-center">タグ操作</h3>
+    <div class="flex flex-col gap-3">
+      <button @click="openEditTagMobile"
+              class="w-full px-4 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700">✏️ 編集する</button>
+      <button @click="confirmDeleteTagMobile"
+              class="w-full px-4 py-3 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600">🗑 削除する</button>
+      <button @click="mobileTagMenu.show = false"
+              class="w-full px-4 py-3 rounded-xl bg-gray-200 text-gray-800 font-medium hover:bg-gray-300">キャンセル</button>
     </div>
+  </div>
+</div>
+
+
+@push('scripts')
+<script>
+function tagFilter() {
+  return {
+    // ...既存のデータ・initなどはそのまま...
+
+    mobileTagMenu: { show: false, tag: null },
+    longPressTimer: null,
+
+    // ✅ タグをクリック／長押しで操作（スマホ対応）
+    handleTagTap(tag, ev) {
+      if (window.innerWidth < 640) {
+        // スマホ時はタップでメニュー表示
+        this.mobileTagMenu = { show: true, tag: tag };
+      } else {
+        // PC時はタグフィルタ動作
+        this.toggleTagFilter(tag.id);
+      }
+    },
+
+    // ✅ 長押しでも開ける（オプション）
+    handleLongPress(tag) {
+      if (window.innerWidth < 640) {
+        this.longPressTimer = setTimeout(() => {
+          this.mobileTagMenu = { show: true, tag: tag };
+        }, 600);
+      }
+    },
+
+    // ✅ スマホ版：タグ編集
+    openEditTagMobile() {
+      if (!this.mobileTagMenu.tag) return;
+      this.editTagModal = {
+        show: true,
+        tagId: this.mobileTagMenu.tag.id,
+        name: this.mobileTagMenu.tag.name,
+        error: ''
+      };
+      this.mobileTagMenu.show = false;
+    },
+
+    // ✅ スマホ版：タグ削除
+    async confirmDeleteTagMobile() {
+      if (!this.mobileTagMenu.tag) return;
+      if (!confirm(`「${this.mobileTagMenu.tag.name}」を削除しますか？`)) return;
+
+      try {
+        const res = await fetch(`/tags/${this.mobileTagMenu.tag.id}`, {
+          method: 'DELETE',
+          headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error('削除に失敗しました');
+        this.mobileTagMenu.show = false;
+        await this.fetchTags();
+        await this.fetchItems();
+      } catch (e) {
+        alert(e.message);
+      }
+    },
+
+    // ...既存メソッド（fetchTags, saveTagEdit など）は全てそのまま...
+  };
+}
+</script>
+@endpush
+
     
 
     {{-- 📦 在庫カード一覧 --}}
