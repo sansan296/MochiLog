@@ -2,54 +2,56 @@
   <script src="https://unpkg.com/alpinejs" defer></script>
 
   @php
-      // 🧭 セッションからモードとグループ情報を取得
-      $currentMode = session('mode');
-      $selectedGroupId = session('selected_group_id');
-      $selectedGroup = $selectedGroupId ? \App\Models\Group::find($selectedGroupId) : null;
+  // 🧭 セッションからモードとグループ情報を取得
+  $currentMode = session('mode');
+  $selectedGroupId = session('selected_group_id');
+  $selectedGroup = $selectedGroupId ? \App\Models\Group::find($selectedGroupId) : null;
 
-      // 表示用モードラベル
-      $modeLabel = match ($currentMode) {
-          'household' => '🏠 家庭用',
-          'company'   => '🏢 企業用',
-          default     => '⚙️ 未選択',
-      };
+  // 表示用モードラベル
+  $modeLabel = match ($currentMode) {
+  'household' => '🏠 家庭用',
+  'company' => '🏢 企業用',
+  default => '⚙️ 未選択',
+  };
   @endphp
 
-  <div 
+  <div
     x-data="{ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }"
     x-init="setInterval(() => time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 1000)"
-    class="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800"
-  >
-    {{-- 🌟 上部バー（中央にタイトル、右側にグループとログアウト） --}}
-<div class="relative flex justify-end items-center w-full px-4 sm:px-10 py-3 sm:py-5 bg-white/80 backdrop-blur-md shadow-md space-x-4 sm:space-x-6">
+    class="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    {{-- 🌟 上部バー（中央タイトル＋グループ表示＋スマホ対応） --}}
+    <header class="relative w-full bg-white/80 backdrop-blur-md shadow-md px-4 sm:px-10 py-3 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
 
-  {{-- 🎯 中央タイトル「メニュー」 --}}
-  <h2 class="absolute left-1/2 transform -translate-x-1/2 text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white tracking-wide">
-    メニュー
-  </h2>
+      {{-- 🎯 中央タイトル --}}
+      <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 dark:text-white tracking-wide order-1 sm:order-none">
+        メニュー
+      </h2>
 
-  {{-- 🏷 現在のグループ --}}
-  @php
+      {{-- 🏷 現在のグループ（スマホでは下に回る） --}}
+      @php
       $currentGroup = session('selected_group_id')
-          ? \App\Models\Group::find(session('selected_group_id'))
-          : null;
-  @endphp
-  @if($currentGroup)
-      <div class="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-pink-50 dark:from-gray-700 dark:to-gray-800 px-3 py-1 rounded-full border border-blue-100 dark:border-gray-600 text-sm sm:text-base">
-          <span class="text-gray-700 dark:text-gray-200 font-medium">
-              🏷 {{ $currentGroup->name }}
-              <span class="text-gray-500 dark:text-gray-400">
-                  （{{ $currentGroup->mode === 'household' ? '家庭用' : '企業用' }}）
-              </span>
-          </span>
-          <a href="{{ route('group.select') }}"
-              class="text-blue-600 dark:text-blue-400 hover:underline text-xs sm:text-sm">
-              切り替え
-          </a>
+      ? \App\Models\Group::find(session('selected_group_id'))
+      : null;
+      @endphp
+      @if($currentGroup)
+      <div class="flex justify-center sm:justify-end items-center gap-2
+              bg-gradient-to-r from-blue-50 to-pink-50 dark:from-gray-700 dark:to-gray-800
+              px-3 py-1 rounded-full border border-blue-100 dark:border-gray-600
+              text-sm sm:text-base text-gray-700 dark:text-gray-200 font-medium
+              order-2 sm:order-none">
+        🏷 {{ $currentGroup->name }}
+        <span class="text-gray-500 dark:text-gray-400">
+          （{{ $currentGroup->mode === 'household' ? '家庭用' : '企業用' }}）
+        </span>
+        <a href="{{ route('group.select') }}"
+          class="text-blue-600 dark:text-blue-400 hover:underline text-xs sm:text-sm">
+          切り替え
+        </a>
       </div>
-  @endif
+      @endif
 
-</div>
+    </header>
+
 
 
 
@@ -60,29 +62,29 @@
         {{-- 📦 メニューグリッド --}}
         <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           @php
-            $card = "bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col gap-2 sm:gap-3 p-5 sm:p-8 border border-transparent hover:border-indigo-200 active:scale-[0.98]";
-            $title = "sm:text-2xl font-semibold text-gray-800 flex items-center gap-2";
-            $desc  = "text-sm sm:text-base text-gray-500 leading-snug";
+          $card = "bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col gap-2 sm:gap-3 p-5 sm:p-8 border border-transparent hover:border-indigo-200 active:scale-[0.98]";
+          $title = "sm:text-2xl font-semibold text-gray-800 flex items-center gap-2";
+          $desc = "text-sm sm:text-base text-gray-500 leading-snug";
           @endphp
 
           {{-- モード通知 --}}
           @if ($currentMode === 'household')
-            <a href="{{ route('home.dashboard') }}" class="{{ $card }}">
-              <h3 class="{{ $title }} text-center">🏠 家庭向け通知</h3>
-              <p class="hidden sm:block {{ $desc }}">家庭モード用のお知らせを確認できます。</p>
-              </a>
+          <a href="{{ route('home.dashboard') }}" class="{{ $card }}">
+            <h3 class="{{ $title }} text-center">🏠 家庭向け通知</h3>
+            <p class="hidden sm:block {{ $desc }}">家庭モード用のお知らせを確認できます。</p>
+          </a>
 
           @elseif ($currentMode === 'company')
-            <a href="{{ route('company.dashboard') }}" class="{{ $card }}">
-              <h3 class="{{ $title }} text-center">🏢 企業向け通知</h3>
-                <p class="hidden sm:block {{ $desc }}">企業モード用のお知らせを確認できます。</p>
-            </a>
+          <a href="{{ route('company.dashboard') }}" class="{{ $card }}">
+            <h3 class="{{ $title }} text-center">🏢 企業向け通知</h3>
+            <p class="hidden sm:block {{ $desc }}">企業モード用のお知らせを確認できます。</p>
+          </a>
 
           @else
-            <a href="{{ route('mode.select') }}" class="{{ $card }}">
-              <h3 class="{{ $title }} text-center">⚙️ モード未選択</h3>
-              <p class="hidden sm:block {{ $desc }}">モードを選択してから通知を確認できます。</p>
-            </a>
+          <a href="{{ route('mode.select') }}" class="{{ $card }}">
+            <h3 class="{{ $title }} text-center">⚙️ モード未選択</h3>
+            <p class="hidden sm:block {{ $desc }}">モードを選択してから通知を確認できます。</p>
+          </a>
           @endif
 
 
